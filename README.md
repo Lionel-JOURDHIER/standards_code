@@ -16,7 +16,7 @@ rules/securite-api.md    idem src/api/, auth.py, security.py
 rules/cicd.md            idem .gitea/workflows/
 rules/http.md            idem clients/, integrations/ — appels HTTP sortants
 rules/workflow-session.md déroulé d'une session, chargé toujours
-modeles/CLAUDE.md        à copier et remplir dans un nouveau dépôt
+modeles/modele-CLAUDE.md à copier en CLAUDE.md et remplir dans un nouveau dépôt
 modeles/FICHE-MODELE.md  une par modèle promu en production
 hooks/pre-commit         garde-fou git, configurable par dépôt
 hooks/standards.conf.exemple
@@ -29,7 +29,7 @@ tests/banc-hook.sh       banc de test du hook, à relancer après l'avoir modifi
 ```bash
 git submodule add <url>/standards-code.git .claude/standards
 mkdir -p .claude/rules .githooks
-cp .claude/standards/modeles/CLAUDE.md CLAUDE.md
+cp .claude/standards/modeles/modele-CLAUDE.md CLAUDE.md
 cp .claude/standards/hooks/pre-commit .githooks/pre-commit
 cp .claude/standards/hooks/standards.conf.exemple .githooks/standards.conf
 chmod +x .githooks/pre-commit
@@ -48,6 +48,11 @@ cp .claude/standards/rules/python.md .claude/rules/python.md
 Une copie plutôt qu'un lien symbolique : sous Windows les liens exigent les
 droits administrateur ou le mode développeur. La contrepartie est que la copie
 peut dater — d'où la commande de mise à jour ci-dessous.
+
+Le modèle ne s'appelle pas `CLAUDE.md` dans le sous-module, et ce n'est pas
+cosmétique : Claude charge les `CLAUDE.md` des sous-répertoires dès qu'il lit un
+fichier à côté. Un gabarit à trous entrerait alors en contexte comme de vraies
+consignes de projet. Ne pas le renommer.
 
 Le `CLAUDE.md` du dépôt commence par `@.claude/standards/socle-code.md`. Le
 chemin reste à l'intérieur du dépôt, donc pas de demande d'approbation au

@@ -26,7 +26,11 @@ un projet n'a rien à faire ici.
    dépôt existant qui ne les a pas, la règle ne s'applique pas d'elle-même. On
    signale l'écart, on propose l'ajout, on attend l'accord.
 3. Une modification fait une chose. Pas de reformatage, de renommage ni de
-   correction opportuniste au détour d'un autre correctif.
+   correction opportuniste au détour d'un autre correctif. La frontière avec la
+   priorité 1 : ce que j'écris ou réécris suit les conventions, ce qui existait
+   autour et que je n'ai pas eu à toucher reste tel quel. Une docstring devenue
+   fausse parce que j'ai changé le comportement appartient au premier lot, pas
+   au second.
 
 ## Docstrings et en-têtes
 
@@ -60,8 +64,13 @@ Dans cet ordre, à chaque fois :
 2. **Écrire la version la plus directe** qui traite le cas demandé, et rien
    d'autre.
 3. **Ne factoriser qu'ensuite**, et seulement ce qui est prouvé identique.
-4. **Supprimer** ce qui n'est plus atteint. Du code retiré est du code gagné :
-   il ne se maintient pas, ne se teste pas et ne se lit pas de travers.
+4. **Supprimer ce que la modification vient de rendre inatteignable.** Du code
+   retiré est du code gagné : il ne se maintient pas, ne se teste pas et ne se
+   lit pas de travers. Le code mort qui préexistait n'entre pas dans le lot,
+   c'est une tâche à part — sinon on retire au détour d'un correctif ce que la
+   priorité 3 interdit de toucher. Et avant toute suppression, vérifier qu'il
+   n'y a pas d'appel par nom — VBA, réflexion, point d'entrée déclaré en
+   configuration — qu'aucune recherche de références ne fait apparaître.
 
 ### KISS
 
