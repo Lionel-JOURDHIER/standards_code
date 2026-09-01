@@ -51,6 +51,48 @@ un projet n'a rien à faire ici.
   commit.
 - Pas de code mort laissé en commentaire : git le retrouve.
 
+## Méthode : le plus simple qui règle le cas demandé
+
+Dans cet ordre, à chaque fois :
+
+1. **Formuler la règle métier** en une phrase, avant d'écrire une ligne. Un code
+   qu'on n'arrive pas à décrire en une phrase résout un problème mal posé.
+2. **Écrire la version la plus directe** qui traite le cas demandé, et rien
+   d'autre.
+3. **Ne factoriser qu'ensuite**, et seulement ce qui est prouvé identique.
+4. **Supprimer** ce qui n'est plus atteint. Du code retiré est du code gagné :
+   il ne se maintient pas, ne se teste pas et ne se lit pas de travers.
+
+### KISS
+
+- Le besoin exprimé, pas le besoin imaginé. Pas de paramètre de configuration
+  pour un cas qui ne s'est jamais présenté, pas de couche d'abstraction avec une
+  seule implémentation, pas de moteur générique là où trois conditions
+  suffisent. Le jour où le deuxième cas arrive, on le voit vraiment — et il ne
+  ressemble presque jamais à celui qu'on avait anticipé.
+- Une fonction dont on ne peut pas prédire le comportement à la lecture de sa
+  signature est trop maligne, même si elle est courte.
+- Préférer ce que la bibliothèque standard fait déjà à une réécriture, et une
+  structure de données évidente à une astuce qui économise trois lignes.
+
+### DRY
+
+Ce qui ne doit pas être dupliqué, c'est une **règle**, pas des caractères.
+
+- Une même valeur, un même seuil, un même format de fichier, une même règle de
+  gestion : un seul endroit, toujours. Deux copies divergent, et c'est la
+  mauvaise qui reste en production.
+- Deux blocs qui se ressemblent aujourd'hui mais qui évolueront pour des raisons
+  différentes **restent séparés**. Les fusionner crée un couplage qu'on paiera
+  en ajoutant un paramètre booléen pour retrouver les deux comportements — et un
+  booléen qui pilote le corps d'une fonction est le signe qu'il en fallait deux.
+- Attendre la troisième occurrence avant d'extraire. À la deuxième, on ne sait
+  pas encore ce qui est commun et ce qui est accidentel.
+
+Les deux principes se contredisent régulièrement. Quand c'est le cas, KISS
+l'emporte : une duplication se voit et se corrige, une mauvaise abstraction se
+propage.
+
 ## Découpage et nommage
 
 - Une fonction fait une chose et tient à l'écran. Au-delà, extraire plutôt
@@ -87,8 +129,11 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
 - **`develop`** : branche d'intégration, branche par défaut de tout nouveau
   travail.
 - **`feature/<nom-kebab-case>`** : une branche par tâche, créée depuis
-  `develop`, fusionnée dans `develop` par `git merge` (pas de rebase, pas de
-  squash — historique simple), puis supprimée.
+  `develop`, fusionnée dans `develop` par `git merge --no-ff`, puis supprimée.
+  Pas de rebase, pas de squash : les commits restent tels qu'ils ont été écrits.
+  `--no-ff` force un commit de fusion même quand l'avance rapide est possible,
+  ce qui garde le regroupement de la tâche une fois la branche supprimée. Sans
+  lui, l'option `-m` est ignorée en silence et le message de fusion est perdu.
 - **`hotfix/<nom-kebab-case>`** : correction urgente créée depuis `main`,
   fusionnée dans `main` **et** dans `develop`.
 - Ne jamais committer directement sur `main`.

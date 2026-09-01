@@ -34,8 +34,8 @@
 3. Résumé écrit dans `SESSION.md` au format ci-dessous.
 4. Relecture du résumé avec l'utilisateur avant de continuer.
 5. `ARCHITECTURE.md` mis à jour si l'architecture a bougé.
-6. Commit sur la branche `feature/*`, fusion dans `develop`, suppression de la
-   branche.
+6. Commit sur la branche `feature/*`, fusion dans `develop` avec
+   `git merge --no-ff`, suppression de la branche.
 7. `/clear`.
 
 Ne jamais faire `/clear` avant que les vérifications passent et que `SESSION.md`

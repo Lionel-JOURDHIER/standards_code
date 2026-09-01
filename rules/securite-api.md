@@ -158,13 +158,15 @@ L'injection de prompt n'a pas de correctif unique : c'est de la défense en
 profondeur, à traiter comme un risque accepté et borné, pas comme un bug à
 fermer.
 
-## Journalisation
+## Réponses d'erreur
 
 Le message d'une exception ne sort jamais vers le client. `rules/python.md`
 fait remonter les exceptions jusqu'au point d'entrée, qui décide de l'affichage :
 sur une route, décider signifie journaliser la trace complète et renvoyer un
 message générique. Un `detail=str(e)` recopié tel quel trahit l'existence d'un
 compte, un chemin de fichier ou l'URL de base avec son mot de passe.
+
+## Journalisation
 
 Ne jamais journaliser un mot de passe, un jeton, une clé — y compris en cas
 d'échec d'authentification, où le réflexe de « logger l'entrée pour comprendre »
