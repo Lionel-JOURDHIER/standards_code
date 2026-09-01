@@ -93,6 +93,18 @@ Avant de croire un résultat :
   déploiement.
 - Le champion précédent reste déployable. Retour arrière en une commande.
 
+## Portail qualité avant promotion
+
+Le rapport de dérive n'est pas un tableau de bord : c'est un test qui bloque.
+Avant une promotion ou une mise en service, le pipeline compare le lot courant à
+la fenêtre de référence (Evidently, `Report` sur un preset de dérive ou de
+qualité), extrait les métriques du snapshot et lève une exception si un seuil
+métier est franchi. Un rapport qu'on regarde après coup ne protège de rien.
+
+- Le seuil est dans la configuration et dans la fiche modèle, pas dans le code
+  du contrôle.
+- Le rapport est archivé en artefact du run (JSON + HTML), pas seulement affiché.
+
 ## Écart entraînement / service
 
 - Le calcul des variables est un module unique importé des deux côtés. Deux

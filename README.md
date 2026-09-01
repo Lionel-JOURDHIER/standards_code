@@ -7,9 +7,14 @@ projet.
 ```
 socle-code.md            règles valables partout, importées dans chaque CLAUDE.md
 rules/python.md          règles chargées seulement sur les .py
-rules/javascript.md      idem .js
+rules/javascript.md      idem .js / .mjs / .cjs / .html — code navigateur
+rules/nodejs.md          idem package.json, .mjs, server/ — code serveur
 rules/vba.md             idem .bas / .cls / .frm
 rules/ml.md              idem src/ml/
+rules/bdd.md             idem db/, repositories/, migrations/, alembic/
+rules/securite-api.md    idem src/api/, auth.py, security.py
+rules/cicd.md            idem .gitea/workflows/
+rules/http.md            idem clients/, integrations/ — appels HTTP sortants
 rules/workflow-session.md déroulé d'une session, chargé toujours
 modeles/CLAUDE.md        à copier et remplir dans un nouveau dépôt
 modeles/FICHE-MODELE.md  une par modèle promu en production
@@ -83,10 +88,14 @@ la racine), et une `standards.conf` en CRLF qui désactivait tout en silence.
 
 ```bash
 git -C .claude/standards pull
-cp .claude/standards/rules/*.md .claude/rules/
+for r in .claude/rules/*.md; do cp ".claude/standards/rules/$(basename "$r")" "$r"; done
 cp .claude/standards/hooks/pre-commit .githooks/pre-commit
 bash .claude/standards/hooks/verifier-installation
 ```
+
+La boucle ne rafraîchit que les règles **déjà présentes** dans le dépôt. Un
+`cp rules/*.md` déverserait les dix règles dans tous les projets, y compris
+celles qui n'y servent à rien.
 
 Le vérificateur signale une copie du hook qui aurait dérivé de la référence.
 
