@@ -87,8 +87,11 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
 - **`develop`** : branche d'intégration, branche par défaut de tout nouveau
   travail.
 - **`feature/<nom-kebab-case>`** : une branche par tâche, créée depuis
-  `develop`, fusionnée dans `develop` par `git merge` (pas de rebase, pas de
-  squash — historique simple), puis supprimée.
+  `develop`, fusionnée dans `develop` par `git merge --no-ff`, puis supprimée.
+  Pas de rebase, pas de squash : les commits restent tels qu'ils ont été écrits.
+  `--no-ff` force un commit de fusion même quand l'avance rapide est possible,
+  ce qui garde le regroupement de la tâche une fois la branche supprimée. Sans
+  lui, l'option `-m` est ignorée en silence et le message de fusion est perdu.
 - **`hotfix/<nom-kebab-case>`** : correction urgente créée depuis `main`,
   fusionnée dans `main` **et** dans `develop`.
 - Ne jamais committer directement sur `main`.
