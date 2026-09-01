@@ -1,16 +1,22 @@
 ---
 paths:
   - "**/*.js"
+  - "**/*.mjs"
+  - "**/*.cjs"
   - "**/*.html"
 ---
 
 # JavaScript
 
+<!-- Code navigateur. Ce qui est propre à l'exécution côté serveur —
+     dépendances npm, processus, système de fichiers — est dans
+     rules/nodejs.md, qui se charge en plus de celle-ci sur ces fichiers. -->
+
 ## Outillage
 
 - **Biome** pour le lint et le format, un seul outil, configuration dans
-  `biome.json`. Installation une fois par machine : `npm install` (nécessite
-  Node.js). Avant de committer :
+  `biome.json`. Installation des dépendances : voir `rules/nodejs.md`, qui est
+  le seul endroit où la commande est donnée. Avant de committer :
   `npx biome check app && npx biome format --write app`
 - Ce que Biome vérifie n'est pas répété ici.
 - Pas de bundler ni de chaîne de build tant que le projet n'en a pas besoin.
@@ -22,7 +28,8 @@ paths:
   variables globales au fichier : dans ce cas `import`/`export` ne fonctionnent
   pas et introduire `type="module"` est un changement d'architecture, pas un
   détail de mise en forme.
-- Un fichier par page ou par écran. Même seuil de taille qu'en Python.
+- Un fichier par page ou par écran. Le seuil de taille est celui déclaré
+  dans le `CLAUDE.md` du dépôt, le même pour tous les langages du projet.
 
 ## Documentation
 
@@ -61,6 +68,21 @@ try {
 - Un appel au pont natif est asynchrone même quand il en a l'air synchrone :
   `await`, et le `try`/`catch` autour, sinon l'erreur est avalée par une
   promesse non gérée.
+
+## HTML
+
+Le glob de cette règle couvre les `.html` : Biome ne les analyse pas, tout ce qui
+suit tient donc à la relecture.
+
+- Le numéro de version des `<script src="...?v=n">` est la contrepartie du piège
+  de cache ci-dessus : il s'incrémente dans le HTML, pas dans le JS.
+- Aucun gestionnaire d'événement en attribut (`onclick="..."`) : le
+  comportement devient introuvable depuis le fichier JS.
+- Aucune donnée serveur interpolée directement dans une balise `<script>`. Elle
+  transite par un attribut `data-` ou par un appel au back-end, sinon la moindre
+  apostrophe casse la page et la moindre saisie utilisateur devient une injection.
+- Structure et style seulement : la logique va dans le `.js`, y compris quand
+  elle tient en trois lignes.
 
 ## Style
 

@@ -10,12 +10,21 @@ un projet n'a rien à faire ici.
 
 ## Priorités en cas de conflit
 
-1. Le code existant fait foi. Si ce socle contredit la pratique visible dans le
-   fichier modifié, suivre le fichier et signaler l'écart plutôt que de le
-   corriger au passage.
+1. Ces conventions — ce socle et les `rules/*.md` — s'appliquent à tout code
+   **écrit ou modifié**, y compris dans un fichier qui ne les respecte pas
+   ailleurs. Mais le reste du fichier n'est pas repris pour autant : on signale
+   l'écart, on ne réécrit pas l'existant au détour d'une modification. Deux
+   choses ne se laissent jamais en l'état par simple imitation du fichier : un
+   secret ou une donnée réelle exposés, et un risque de perte de données. Cela
+   se corrige, ou se signale immédiatement si la correction sort du cadre de la
+   demande.
 2. Ne jamais introduire un outil ou une dépendance qui n'est pas déjà dans le
-   projet (logger, linter, framework de test, formateur) sans que ce soit
-   l'objet explicite de la demande.
+   projet — logger, linter, framework de test, formateur, bibliothèque tierce —
+   **sans le demander d'abord**, y compris quand l'ajout paraît évident ou
+   minuscule. Les outils nommés dans les `rules/*.md` (Alembic, httpx, slowapi,
+   pwdlib…) sont les défauts d'un projet ou d'un composant **neuf** : dans un
+   dépôt existant qui ne les a pas, la règle ne s'applique pas d'elle-même. On
+   signale l'écart, on propose l'ajout, on attend l'accord.
 3. Une modification fait une chose. Pas de reformatage, de renommage ni de
    correction opportuniste au détour d'un autre correctif.
 
@@ -83,16 +92,29 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
 - **`hotfix/<nom-kebab-case>`** : correction urgente créée depuis `main`,
   fusionnée dans `main` **et** dans `develop`.
 - Ne jamais committer directement sur `main`.
-- Message de commit au format `type : résumé`, `type` valant `feat` ou `fix`.
-  Un projet peut étendre le format, pas le remplacer.
+- Message de commit au format `type : résumé`, `type` pris dans cette liste :
+
+  | Type | Pour |
+  |---|---|
+  | `feat` | nouvelle fonctionnalité ou comportement visible |
+  | `fix` | correction d'un défaut |
+  | `docs` | documentation seule — README, docstrings, conventions |
+  | `refactor` | réécriture sans changement de comportement |
+  | `test` | ajout ou correction de tests seuls |
+  | `chore` | dépendances, configuration, outillage, `.gitignore` |
+  | `ci` | workflows d'intégration continue |
+
+  Un commit qui relèverait de deux types en fait probablement deux. Un projet
+  peut ajouter un type, pas remplacer la liste.
 
 ## Commits
 
 - Toute modification validée par l'utilisateur (code, docstrings, documentation)
   est committée avant de passer à la suite, sur une branche `feature/*`
-  fusionnée dans `develop` — sans redemander confirmation une fois le changement
-  vérifié, et sans laisser des changements non commités s'accumuler d'une tâche
-  à l'autre.
+  fusionnée dans `develop`. L'ordre est celui de `rules/workflow-session.md` :
+  vérifications, résumé dans `SESSION.md`, relecture avec l'utilisateur, puis
+  commit. Une fois le résumé validé, committer sans redemander confirmation, et
+  sans laisser des changements non commités s'accumuler d'une tâche à l'autre.
 - Ne jamais pousser (`git push`), forcer un push, fusionner dans `main` ni
   réécrire l'historique sans demande explicite. Le commit automatique ne couvre
   que les commits locaux et la fusion locale dans `develop`.
