@@ -15,6 +15,8 @@ modeles/CLAUDE.md        à copier et remplir dans un nouveau dépôt
 modeles/FICHE-MODELE.md  une par modèle promu en production
 hooks/pre-commit         garde-fou git, configurable par dépôt
 hooks/standards.conf.exemple
+hooks/verifier-installation  contrôle que le garde-fou est vraiment actif
+tests/banc-hook.sh       banc de test du hook, à relancer après l'avoir modifié
 ```
 
 ## Installer dans un dépôt
@@ -27,7 +29,10 @@ cp .claude/standards/hooks/pre-commit .githooks/pre-commit
 cp .claude/standards/hooks/standards.conf.exemple .githooks/standards.conf
 chmod +x .githooks/pre-commit
 git config core.hooksPath .githooks
+bash .claude/standards/hooks/verifier-installation
 ```
+
+La dernière ligne n'est pas facultative : voir ci-dessous.
 
 Puis, pour chaque langage présent dans le dépôt :
 
@@ -43,13 +48,47 @@ Le `CLAUDE.md` du dépôt commence par `@.claude/standards/socle-code.md`. Le
 chemin reste à l'intérieur du dépôt, donc pas de demande d'approbation au
 premier lancement.
 
+## Vérifier que le garde-fou est actif
+
+```bash
+bash .claude/standards/hooks/verifier-installation
+```
+
+Une installation ratée ne se voit pas : sur les quatre façons de la rater, trois
+laissent passer les commits comme si tout allait bien.
+
+| Ce qui cloche | Ce que fait git |
+|---|---|
+| `.githooks/` vide, hook jamais copié | accepte tout, sans un mot |
+| hook non exécutable | accepte tout, avec un `hint:` noyé dans la sortie |
+| `standards.conf` rangé ailleurs que dans `.githooks/` | accepte tout, sans un mot |
+| hook en CRLF | refuse tout, bruyamment (`env: 'bash\r': ...`) |
+
+`git config core.hooksPath` est un réglage **local**, donc non versionné : à
+refaire après chaque clone, sur chaque poste. C'est le premier suspect quand un
+commit qui aurait dû être refusé passe.
+
+## Modifier le hook
+
+```bash
+bash tests/banc-hook.sh
+```
+
+Trente-trois cas, chacun dans un dépôt jetable. Deux d'entre eux gardent des
+défauts déjà rencontrés : un motif comme `*.xlsx` développé par le shell avant
+la comparaison (le fichier interdit passait dès qu'un autre `.xlsx` traînait à
+la racine), et une `standards.conf` en CRLF qui désactivait tout en silence.
+
 ## Mettre à jour un dépôt
 
 ```bash
 git -C .claude/standards pull
 cp .claude/standards/rules/*.md .claude/rules/
 cp .claude/standards/hooks/pre-commit .githooks/pre-commit
+bash .claude/standards/hooks/verifier-installation
 ```
+
+Le vérificateur signale une copie du hook qui aurait dérivé de la référence.
 
 Ne recopiez que les règles des langages présents : une règle chargée pour rien
 consomme du contexte à chaque session.

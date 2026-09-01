@@ -1,0 +1,8 @@
+# Windows dépose un flux de zone à côté de chaque fichier téléchargé ; sous WSL
+# ils apparaissent comme des fichiers à part entière et onze d'entre eux
+# avaient fini committés.
+*:Zone.Identifier
+
+# Copie locale du hook, refaite par la commande de mise à jour du README.
+# La référence versionnée est hooks/pre-commit.
+.githooks/pre-commit

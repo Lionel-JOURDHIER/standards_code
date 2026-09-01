@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+#
+# Vérifie que le hook pre-commit est réellement actif dans le dépôt courant.
+#
+#   bash .claude/standards/hooks/verifier-installation
+#
+# Utile parce que deux installations cassées sur trois laissent passer les
+# commits sans rien dire : un .githooks/ vide, et un hook non exécutable
+# (git se contente d'un « hint: » vite noyé dans la sortie).
+
+set -uf
+
+RACINE=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  printf 'pas un dépôt git\n' >&2; exit 2
+}
+cd "$RACINE" || exit 2
+
+pb=0
+ko() { printf '  \033[31mKO\033[0m   %s\n' "$1"; pb=$((pb + 1)); }
+ok() { printf '  \033[32mOK\033[0m   %s\n' "$1"; }
+note() { printf '       %s\n' "$1"; }
+
+printf '\n[standards-code] vérification dans %s\n\n' "$RACINE"
+
+# --- Le hook est-il branché ? ----------------------------------------------
+chemin=$(git config --get core.hooksPath || echo "")
+if [ -z "$chemin" ]; then
+  ko "core.hooksPath n'est pas défini (réglage local, à refaire sur chaque poste)"
+  note "git config core.hooksPath .githooks"
+  chemin=.githooks
+else
+  ok "core.hooksPath = $chemin"
+fi
+
+HOOK="$RACINE/$chemin/pre-commit"
+if [ ! -f "$HOOK" ]; then
+  ko "$chemin/pre-commit est absent : tous les commits passent, sans message"
+  note "cp .claude/standards/hooks/pre-commit $chemin/pre-commit"
+else
+  ok "$chemin/pre-commit est présent"
+  if [ -x "$HOOK" ]; then
+    ok "$chemin/pre-commit est exécutable"
+  else
+    ko "$chemin/pre-commit n'est pas exécutable : git l'ignore avec un simple hint"
+    note "chmod +x $chemin/pre-commit"
+  fi
+  if grep -qU $'\r' "$HOOK" 2>/dev/null; then
+    ko "$chemin/pre-commit contient des CR (copié depuis Windows)"
+    note "sed -i 's/\r$//' $chemin/pre-commit"
+  fi
+fi
+
+# --- La copie a-t-elle dérivé de la référence ? ------------------------------
+for reference in .claude/standards/hooks/pre-commit hooks/pre-commit; do
+  [ -f "$RACINE/$reference" ] || continue
+  [ "$RACINE/$reference" -ef "$HOOK" ] && break
+  if [ -f "$HOOK" ] && ! cmp -s "$RACINE/$reference" "$HOOK"; then
+    ko "$chemin/pre-commit diffère de $reference : copie datée"
+    note "cp $reference $chemin/pre-commit"
+  fi
+  break
+done
+
+# --- Configuration ----------------------------------------------------------
+# Chemin fixe : le hook ne lit que celui-là, même si core.hooksPath pointe ailleurs.
+CONF="$RACINE/.githooks/standards.conf"
+MOTIFS_INTERDITS=""; INTERDIRE_PRINT=0; INTERDIRE_LOGGING=0
+if [ -f "$CONF" ]; then
+  ok ".githooks/standards.conf est présent"
+  grep -qU $'\r' "$CONF" 2>/dev/null && note "des CR y traînent, le hook les retire à la lecture"
+  # shellcheck source=/dev/null
+  . <(tr -d '\r' < "$CONF")
+else
+  note ".githooks/standards.conf absent : seule la branche protégée est vérifiée"
+fi
+
+# --- Épreuve réelle ---------------------------------------------------------
+# Le hook est lancé sur un index jetable : ni commit, ni fichier créé.
+sonde=""; contenu=""
+if [ -n "$MOTIFS_INTERDITS" ]; then
+  premier=${MOTIFS_INTERDITS%% *}
+  sonde=${premier//\*/verification-standards}
+  [ "${sonde: -1}" = "/" ] && sonde="${sonde}verification-standards"
+elif [ "$INTERDIRE_PRINT" -eq 1 ]; then
+  sonde=verification_standards.py; contenu='print(1)'
+elif [ "$INTERDIRE_LOGGING" -eq 1 ]; then
+  sonde=verification_standards.py; contenu='import logging'
+fi
+
+if [ -n "$sonde" ] && [ -x "$HOOK" ]; then
+  index=$(mktemp -u)
+  blob=$(printf '%s\n' "$contenu" | git hash-object -w --stdin)
+  GIT_INDEX_FILE=$index git read-tree HEAD 2>/dev/null || true
+  GIT_INDEX_FILE=$index git update-index --add \
+    --cacheinfo "100644,$blob,$sonde" 2>/dev/null
+  if GIT_INDEX_FILE=$index "$HOOK" >/dev/null 2>&1; then
+    ko "épreuve réelle : « $sonde » aurait été accepté alors qu'il est interdit"
+  else
+    ok "épreuve réelle : « $sonde » est bien refusé"
+  fi
+  rm -f "$index"
+elif [ -z "$sonde" ]; then
+  note "aucune règle de contenu configurée : rien à éprouver"
+fi
+
+printf '\n'
+if [ "$pb" -gt 0 ]; then
+  printf '[standards-code] %d point(s) à corriger.\n\n' "$pb"; exit 1
+fi
+printf '[standards-code] le garde-fou est actif.\n\n'
