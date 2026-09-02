@@ -1145,3 +1145,52 @@ ce résumé)
   accessible par `git log`.
 - Toujours sans réponse : les trois points « à vérifier sur notre instance » de
   `cicd.md`.
+
+## [2026-09-02] — Historique réécrit pour retirer l'ancienne adresse
+
+**Branche :** `develop` (réécriture portant sur `develop` et `main`)
+
+**Fait :**
+- `git filter-repo` (via `uvx`, l'outil n'est pas installé sur le poste) avec un
+  `--mailmap` réattribuant les commits de l'ancienne adresse à
+  `Lionel JOURDHIER <lio.jourdhier@gmail.com>`, et un `--replace-text` nettoyant
+  les blobs : deux versions de `SESSION.md` contenaient l'adresse en clair.
+- Les 106 commits sont conservés, la topologie et les fusions `--no-ff` aussi.
+  Tous les hachages changent : le commit porteur de l'adresse était la racine.
+
+**Décisions techniques :**
+- Réécriture faite dans le dépôt en place (`--force`) plutôt que sur un clone
+  neuf : aucun autre worktree ni branche en cours ici, et la sauvegarde couvre
+  le retour arrière.
+- `filter-repo` supprime le remote `origin` par sécurité ; il a été remis à
+  l'identique après vérification.
+
+**Vérifié :**
+- `git log --all` : une seule identité, `Lionel JOURDHIER
+  <lio.jourdhier@gmail.com>`. Aucune occurrence du nom retiré dans les blobs de
+  tous les commits, ni dans les messages.
+- `git rev-list --all --count` : 106, comme avant. `git fsck` : rien (hors bruit
+  `Zone.Identifier`, artefacts WSL sans rapport).
+- Sauvegarde avant réécriture : `git bundle` de tous les refs, vérifié par
+  `git bundle verify`, dans le répertoire de travail temporaire de la session —
+  donc **non pérenne**. Anciens refs : `develop` `fd63279`, `main` `f9a2381`.
+
+**Correspondance des hachages utiles :**
+
+| Avant | Après | Ce que c'est |
+|---|---|---|
+| `2060bf9` | `0b98115` | commit racine, `feat : socle initial` |
+| `cd6dc95` | `9f7537c` | pointeur du sous-module de HorRAGor |
+| `f9a2381` | `1608ca2` | ancien `main` |
+| `fd63279` | `74a7aa1` | ancien `develop` |
+
+**Points de vigilance pour la suite :**
+- **Le remote n'est pas encore réécrit** : l'accès SSH ne fonctionne pas depuis
+  ce poste (`Permission denied (publickey)`). Tant que le `push --force` n'est
+  pas fait, GitHub sert toujours l'ancien historique, adresse incluse. Et même
+  après, GitHub garde un temps les objets accessibles par leur SHA : un effacement
+  complet côté GitHub passe par leur support.
+- Le sous-module `.claude/standards` de HorRAGor est épinglé sur `cd6dc95`, qui
+  n'existe plus après le push. À repointer sur `main`.
+- Toujours sans réponse : les trois points « à vérifier sur notre instance » de
+  `cicd.md`.
