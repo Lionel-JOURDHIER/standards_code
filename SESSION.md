@@ -34,8 +34,8 @@ combler les manques « au lieu le plus logique ».
 | 19 | hash / cryptage | fait |
 | 20 | Sécuriser une API FastAPI | fait |
 | 21 | Vault 1 & 2 | fait |
-| **22** | **Streamlit** | **à faire — reprendre ici** |
-| 23 | Selenium | à faire |
+| 22 | Streamlit | fait |
+| **23** | **Selenium** | **à faire — reprendre ici** |
 | 24 | Redmail | à faire |
 | 25 | Workflow I | à faire |
 
@@ -398,6 +398,57 @@ Pas de nouveau fichier — le contenu tient dans une section de
 `**/security.py`) couvre déjà exactement le code qui appellerait `hvac`.
 Quatorze règles inchangé.
 
+Cours 22 (Streamlit, 1 support) traité. Contrairement au cours 21, aucun
+fichier existant n'a de périmètre (`paths:`) qui couvre du code Streamlit —
+**nouveau fichier `rules/streamlit.md`** (commit `feat : nouvelle règle
+streamlit.md — structure, état, cache, secrets, déploiement`, fusionné dans
+`develop`) — quinzième règle du dépôt, `README.md` et
+`modeles/modele-CLAUDE.md` mis à jour en conséquence. Le support lui-même
+est un catalogue de widgets et deux mini-projets guidés (fonction affine,
+data analyst sur un CSV de ventes de jeux vidéo) — aucune convention à en
+tirer au niveau API (`st.button()` fait un bouton n'est pas une règle). Le
+contenu réel du fichier vient surtout du `CLAUDE.md` racine § Applications —
+Streamlit (une seule phrase dense, jamais développée dans aucun `rules/*.md`
+jusqu'ici) déplié en sections, plus ce que le support confirme ou contredit :
+- § Structure : dossier `pages/` à préfixe numérique — **confirmé
+  littéralement** par le support (`0_fonction_affine.py`, `1_data_analyst.py`
+  dans les instructions elles-mêmes) ; renvoi à `rules/tests-python.md` pour
+  la logique métier testable séparée du widget, déjà écrit, pas dupliqué.
+- § État et connexions : `@st.cache_resource`, `st.session_state`,
+  `st.rerun()`, `key=` unique en boucle — repris du `CLAUDE.md` racine,
+  développés (raison de chaque règle, pas seulement l'API), absents du
+  support qui ne couvre que les bases.
+- § Fichiers envoyés par l'utilisateur : à partir des deux widgets montrés
+  par le support (`file_uploader`, `download_button`), deux gestes non
+  écrits par le support lui-même — vérifier le contenu réel d'un fichier
+  chargé, pas seulement son extension ; mettre en cache (`@st.cache_data`)
+  un calcul coûteux derrière un bouton de téléchargement, qui se régénère
+  sinon à chaque rerun où il reste affiché.
+- § Journalisation : renvoi à `rules/python.md` (loguru obligatoire), avec la
+  précision propre à Streamlit qu'un `st.write()` de debug oublié reste
+  visible à l'utilisateur final, contrairement à un `print()` oublié.
+- § Secrets : `.streamlit/secrets.toml`, jamais commité — même moule que
+  `.env` dans `rules/python.md` § Configuration.
+- § Déploiement — **divergence assumée corrigée** : le support recommande
+  explicitement « Streamlit Cloud ou un autre service de déploiement ».
+  `rules/python.md` § Choix par défaut fixe déjà « Déploiement serveur :
+  `docker-compose.yml`, images sur le registre interne » pour tout le reste
+  du dépôt — la règle nouvelle étend ce choix par défaut à Streamlit
+  (conteneurisé comme n'importe quelle autre application, `rules/deploiement.md`
+  s'applique), un service cloud tiers restant une dérogation à écrire dans le
+  `CLAUDE.md` du dépôt, pas un défaut.
+
+Non retenu du cours 22, hors périmètre : le catalogue de widgets lui-même
+(boutons, cases à cocher, curseurs, colonnes, onglets, graphiques
+Matplotlib/Plotly/Seaborn) — pure référence d'API, rien à en dire au niveau
+convention ; les deux mini-projets (fonction affine, data analyst) sont des
+exercices, pas une source de règle au-delà de ce qui précède ; les
+alternatives listées en fin de support (Taipy, Panel, Shiny, Gradio,
+streamlit-elements) — mentionnées sans détail, aucun besoin identifié dans
+le corpus.
+
+Quinze règles au total à partir de ce cours.
+
 ### Décisions techniques prises pendant la revue
 
 - **loguru est obligatoire** (demande explicite, 2026-09-02). Ce n'est plus « un
@@ -485,6 +536,12 @@ Quatorze règles inchangé.
   fail-closed `VAULT_ADDR`/`VAULT_TOKEN`, jamais de jeton en dur ni racine,
   AppRole M2M, KV v2/CAS, distinction secret statique/dynamique, Transit,
   response wrapping.
+- `rules/streamlit.md` (cours 22, **nouveau fichier**, quinzième règle) —
+  structure `pages/` à préfixe numérique, `@st.cache_resource`/
+  `st.session_state`/`st.rerun()`/`key=` unique, fichiers envoyés par
+  l'utilisateur, journalisation loguru, secrets `.streamlit/secrets.toml`,
+  déploiement conteneurisé plutôt que Streamlit Cloud. `README.md` et
+  `modeles/modele-CLAUDE.md` mis à jour (quinze règles).
 
 ### Vérifié
 
@@ -535,17 +592,24 @@ Quatorze règles inchangé.
   section dans `rules/securite-api.md`, voisine de § Configuration :
   fail-closed comme anticipé, pas de nouveau fichier (le périmètre de
   `securite-api.md` couvre déjà le code qui appellerait `hvac`). Cours 22
-  (Streamlit) sera vraisemblablement la même figure : `grep -rln -i
-  streamlit rules/ README.md modeles/` ne retourne rien non plus, seul le
-  CLAUDE.md racine en parle (§ Applications, multipage `pages/`,
-  `@st.cache_resource`, `st.session_state`, `st.rerun()`, `key=` unique en
-  boucle, secrets dans `.streamlit/secrets.toml`) — probablement une
-  nouvelle section, à trancher à la lecture entre `rules/securite-api.md`
-  (si le support insiste sur les secrets/l'auth Streamlit) et un nouveau
-  fichier dédié à l'UI/aux applications si le contenu déborde largement du
-  périmètre sécurité (widgets, mise en page, cache) — Streamlit n'a pas la
-  même proximité avec le contenu déjà présent que Vault avec § Configuration
-  fail-closed.
+  (Streamlit) traité : même figure confirmée — `grep -rln -i streamlit
+  rules/ README.md modeles/` ne retournait rien avant ce cours, seul le
+  CLAUDE.md racine en parlait (§ Applications, une phrase dense) —
+  **nouveau fichier `rules/streamlit.md`** (quinzième règle), le support
+  (catalogue de widgets, deux mini-projets) n'apportant lui-même qu'une
+  confirmation de structure (`pages/` à préfixe numérique) et une
+  divergence sur le déploiement (Streamlit Cloud contre le défaut
+  `docker-compose`/registre interne déjà écrit). Cours 23 (Selenium) suit
+  vraisemblablement le même patron : `grep -rln -i selenium rules/
+  README.md modeles/` ne retourne rien non plus, seul le CLAUDE.md racine
+  en parle (§ Applications — Selenium, une phrase : BeautifulSoup pour du
+  HTML statique, Selenium dès qu'il y a du JS, jamais `time.sleep()` mais
+  `WebDriverWait` + `expected_conditions`, `driver.quit()` en `finally`,
+  respect RGPD/robots.txt/CGU) — probable seizième règle, `rules/
+  selenium.md` ou rattachement à `rules/donnees.md`/`rules/http.md` selon ce
+  que montre le support (scraping proche de la récupération de données,
+  mais aussi requêtes sortantes pilotées par navigateur) — à trancher à la
+  lecture plutôt que de décider par avance.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
