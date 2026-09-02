@@ -30,8 +30,8 @@ combler les manques « au lieu le plus logique ».
 | 15 | MLflow | fait |
 | 16 | MLOps 0 → 4 | fait |
 | 17 | Evidently | fait |
-| **18** | **Sécurité en Python** | **à faire — reprendre ici** |
-| 19 | hash / cryptage | à faire |
+| 18 | Sécurité en Python | fait |
+| **19** | **hash / cryptage** | **à faire — reprendre ici** |
 | 20 | Sécuriser une API FastAPI | à faire |
 | 21 | Vault 1 & 2 | à faire |
 | 22 | Streamlit | à faire |
@@ -235,6 +235,32 @@ pas une convention actionnable au-delà de ce qui est déjà écrit ; la
 creusée — aucune recette concrète donnée par le support au-delà de
 l'affirmation, et aucun besoin identifié dans le corpus pour l'instant.
 
+Cours 18 (Sécurité en Python, 1 support) traité : le support lui-même n'est
+qu'un plan de onze lignes (API, JWT, rappel FastAPI, OAuth2 et
+rafraîchissement, 401/403, pas de mot de passe stocké, JWT pas de secret, JWT
+décodé le plus paramétré possible) — aucun de ces points n'est développé,
+c'est l'annonce des cours 19 (hash/cryptage) et 20 (Sécuriser une API
+FastAPI). `rules/securite-api.md` couvre déjà chacun de ces points en détail
+(le fichier existait avant le début de cette revue systématique, sourcé
+directement du kit « Sécuriser une API FastAPI ») et `rules/python.md` §
+Mots de passe et saisie sensible couvre le stockage. Un seul manque réel
+trouvé en confrontant le plan à `rules/securite-api.md` (commit `feat :
+Authorization Code + PKCE plutôt que Resource Owner Password Grant`, fusionné
+dans `develop`) :
+- § Sessions : access + refresh gagne un bullet en tête sur le choix du grant
+  OAuth2 — Authorization Code + PKCE plutôt que Resource Owner Password
+  Grant, déjà énoncé dans le CLAUDE.md racine mais absent de
+  `rules/securite-api.md`, qui ne détaillait que la mécanique access/refresh
+  une fois les jetons obtenus, pas comment ils le sont. Piège nommé
+  explicitement : le tutoriel officiel FastAPI (`OAuth2PasswordRequestForm`)
+  enseigne justement le grant mot de passe.
+Pas de nouveau fichier de règle — quatorze règles inchangé.
+
+Non retenu du cours 18, hors périmètre : rien d'autre à retenir — le plan est
+trop court pour receler d'autre divergence ou complément que celui listé
+ci-dessus ; les points 401/403, JWT sans secret dans le payload et décodage
+paramétré sont déjà couverts mot pour mot par `rules/securite-api.md`.
+
 ### Décisions techniques prises pendant la revue
 
 - **loguru est obligatoire** (demande explicite, 2026-09-02). Ce n'est plus « un
@@ -308,6 +334,10 @@ l'affirmation, et aucun besoin identifié dans le corpus pour l'instant.
 - `README.md`, `modeles/modele-CLAUDE.md` — **quatorze règles** désormais
   (le second listait « onze » pour treize noms déjà énumérés — incohérence
   préexistante corrigée au cours 16).
+- `rules/securite-api.md` (cours 18) — § Sessions : access + refresh gagne un
+  bullet en tête sur Authorization Code + PKCE plutôt que Resource Owner
+  Password Grant, avec le piège du tutoriel officiel FastAPI
+  (`OAuth2PasswordRequestForm`).
 
 ### Vérifié
 
@@ -340,11 +370,15 @@ l'affirmation, et aucun besoin identifié dans le corpus pour l'instant.
   `donnees.md` — sujet d'infrastructure, pas de cycle de vie du modèle ni de
   transformation de données. Cours 17 (Evidently) confirmé situé dans
   `rules/ml.md` § Portail qualité et § Surveillance en production, comme
-  anticipé — aucun nouveau fichier. Cours 18 (Sécurité en Python) ira
+  anticipé — aucun nouveau fichier. Cours 18 (Sécurité en Python) traité :
+  plan de onze lignes annonçant les cours 19/20, situé dans
+  `rules/securite-api.md` (existant, pas `rules/python.md` — le plan parle
+  d'API, JWT, OAuth2, pas de stockage de mot de passe en CLI) — aucun nouveau
+  fichier, un seul bullet ajouté. Cours 19 (hash/cryptage) ira
   vraisemblablement dans `rules/python.md` § Mots de passe et saisie sensible
-  ou une nouvelle section voisine, à confirmer à la lecture — attention à ne
-  pas dupliquer ce qui est déjà couvert par bcrypt/`pwdlib`/`getpass` (cours 1
-  à 10) avant de l'étoffer.
+  et `rules/securite-api.md` § Chiffrement des données, déjà bien fournis
+  (bcrypt/pwdlib, Fernet, RSA/OAEP) — vérifier à la lecture s'il reste un
+  geste concret non couvert plutôt que de dupliquer.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
