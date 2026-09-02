@@ -27,8 +27,8 @@ combler les manques « au lieu le plus logique ».
 | 12 | PySpark | fait |
 | 13 | Machine Learning | fait |
 | 14 | Keras / PyTorch / NLP / audio / Hugging Face | fait |
-| **15** | **MLflow** | **à faire — reprendre ici** |
-| 16 | MLOps 0 → 4 | à faire |
+| 15 | MLflow | fait |
+| **16** | **MLOps 0 → 4** | **à faire — reprendre ici** |
 | 17 | Evidently | à faire |
 | 18 | Sécurité en Python | à faire |
 | 19 | hash / cryptage | à faire |
@@ -97,6 +97,36 @@ vectoriseur texte, modèles pré-entraînés dans ml.md`, fusionné dans
   scratch ; `revision=` épinglée (même principe que la version figée MLflow) ;
   licence du modèle/dataset vérifiée avant réutilisation ; jeton HF en
   variable d'environnement.
+Pas de nouveau fichier de règle — treize règles inchangé.
+
+Cours 15 (MLflow) traité : le support est un tutoriel minimal (`start_run`,
+`log_metric`, `log_param`, `log_model(model, "model")` sans
+`registered_model_name`, rechargement par `runs:/<run_id>/...`) — MLflow
+Tracking seulement, ni Registry ni promotion. `rules/ml.md` couvrait déjà
+l'esprit (rien hors MLflow, artefacts systématiques, Registry comme seul
+chemin vers la production) mais pas le geste mécanique qui relie un run au
+Registry. Ajouts dans `rules/ml.md` (commit `feat : tracking/artifact store,
+registered_model_name et alias figé dans ml.md`, fusionné dans `develop`) :
+- § MLflow : séparation tracking store (SQLite/PostgreSQL) / artifact store
+  (S3/MinIO) — présente dans le CLAUDE.md racine du dossier de formation mais
+  absente de `rules/ml.md` jusqu'ici ; `registered_model_name=` sur
+  `log_model` (ou `mlflow.register_model()` explicite) comme geste qui fait
+  passer un modèle de simple artefact de run à entrée du Registry.
+- § Registry et promotion : distinction explicite `runs:/<run_id>/...`
+  (reproduire une expérience, jamais la production) vs `models:/<nom>@<alias>`
+  ou `models:/<nom>/<n°>` (Registry, seule source de production) — le cours
+  utilise justement `runs:/` pour recharger un modèle, ce qui aurait pu passer
+  pour un patron valable en production sans cette clarification.
+- **Reconciliation avec le CLAUDE.md racine** (`/home/lionel/DEVIA/Support/CLAUDE.md`,
+  section MLOps § MLflow) : ce fichier recommande explicitement un alias
+  (`models:/{name}@{alias}`) avec « cache invalidé si l'alias change de
+  version », alors que `rules/ml.md` disait jusqu'ici « version figée par URI,
+  pas un stage résolu dynamiquement » — lecture proche d'une contradiction. La
+  règle est reformulée pour tenir les deux : alias préféré au numéro de
+  version brut pour la lisibilité, mais résolu une fois (démarrage ou
+  événement explicite d'invalidation), jamais à chaque appel — la « version
+  figée » désigne ce qui tourne en mémoire entre deux invalidations, pas une
+  interdiction des alias.
 Pas de nouveau fichier de règle — treize règles inchangé.
 
 ### Décisions techniques prises pendant la revue
@@ -216,3 +246,10 @@ Pas de nouveau fichier de règle — treize règles inchangé.
   Keras au détail (`EarlyStopping`, `ModelCheckpoint`, `TensorBoard` :
   mécanique déjà couverte par les principes MLflow/Registry existants),
   auto-encodeurs, GAN, diffusion, comparatif Hugging Face vs GitHub.
+- Cours 15 a mis au jour une tension entre `rules/ml.md` § Registry et
+  promotion et le CLAUDE.md racine du dossier de formation sur le
+  chargement par alias — reconciliée (voir plus haut), mais à garder en tête
+  pour le cours 16 (MLOps 0 → 4) qui va probablement retoucher Registry,
+  promotion et déploiement : vérifier qu'aucun autre point du CLAUDE.md racine
+  n'entre en tension avec ce qui a été écrit dans `rules/ml.md` jusqu'ici,
+  plutôt que de découvrir les écarts un par un.
