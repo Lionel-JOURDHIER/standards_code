@@ -36,8 +36,8 @@ combler les manques « au lieu le plus logique ».
 | 21 | Vault 1 & 2 | fait |
 | 22 | Streamlit | fait |
 | 23 | Selenium | fait |
-| **24** | **Redmail** | **à faire — reprendre ici** |
-| 25 | Workflow I | à faire |
+| 24 | Redmail | fait |
+| **25** | **Workflow I** | **à faire — reprendre ici** |
 
 Cours 11 (pgvector) traité : nouvelle section « Recherche vectorielle —
 pgvector » dans `rules/bdd.md`, entre Modèles et Requêtes (commit `feat :
@@ -487,6 +487,38 @@ au-delà de ce qui précède.
 
 Seize règles au total à partir de ce cours.
 
+Cours 24 (Redmail, 17 lignes) traité. Le support le plus court de toute la
+revue : un lien vers la page des mots de passe d'application Google et un
+exemple de sept lignes (`from redmail import gmail`, `gmail.username`/
+`gmail.password`, `.send()`). Le CLAUDE.md racine avait déjà une clause
+dédiée (§ Secrets : « Email : mot de passe d'application dédié, jamais le
+mot de passe réel du compte, chargé depuis l'environnement ») jamais reprise
+dans aucun `rules/*.md`. **Divergence directe dans l'exemple du support
+lui-même** : `gmail.username = "votre_adresse@gmail.com"` et
+`gmail.password = "..."` sont écrits en dur dans le script — exactement ce
+que `rules/python.md` § Configuration interdit déjà de façon générale
+(« aucun identifiant en dur dans le code »). Un bullet ajouté à cette
+section, plutôt qu'une nouvelle section ou un nouveau fichier — le contenu
+tient en deux phrases et rattache un cas concret (Redmail/Gmail) à une règle
+déjà écrite plutôt que de la dupliquer (commit `feat : mot de passe
+d'application Redmail/Gmail dans python.md § Configuration`, fusionné dans
+`develop`) :
+- Mot de passe d'application dédié (jamais le mot de passe réel du compte —
+  une fuite se révoque sans toucher au compte), `gmail.username`/
+  `gmail.password` chargés depuis l'environnement, jamais en dur comme le
+  fait l'exemple du support.
+
+Placé dans `rules/python.md` plutôt que `rules/securite-api.md` : l'envoi
+d'un email n'est pas circonscrit au code d'API (`src/api/**/*.py`,
+`**/auth.py`, `**/security.py`) — un script de notification ou une tâche
+planifiée qui envoie un email n'a aucune raison de vivre dans ces chemins,
+`rules/python.md` charge partout.
+
+Non retenu, hors périmètre : rien d'autre à retenir — le support est trop
+court pour receler d'autre divergence ou complément.
+
+Pas de nouveau fichier de règle — seize règles inchangé.
+
 ### Décisions techniques prises pendant la revue
 
 - **loguru est obligatoire** (demande explicite, 2026-09-02). Ce n'est plus « un
@@ -586,6 +618,9 @@ Seize règles au total à partir de ce cours.
   `XPATH`), `WebDriverWait`/`expected_conditions` jamais `time.sleep()`,
   éthique et cadre légal du scraping. `README.md` et
   `modeles/modele-CLAUDE.md` mis à jour (seize règles).
+- `rules/python.md` (cours 24) — § Configuration gagne un bullet sur l'envoi
+  d'email (Redmail/Gmail) : mot de passe d'application dédié, chargé depuis
+  l'environnement, jamais en dur comme le fait l'exemple du support.
 
 ### Vérifié
 
@@ -652,8 +687,17 @@ Seize règles au total à partir de ce cours.
   "redmail\|smtp\|email" rules/ README.md modeles/` ne retourne rien, seul
   le CLAUDE.md racine en parle (§ Secrets, une clause : mot de passe
   d'application dédié, jamais le mot de passe réel du compte, chargé depuis
-  l'environnement) — probable dix-septième règle, `rules/redmail.md` ou
-  `rules/email.md` selon ce que montre le support, à trancher à la lecture.
+  l'environnement). Traité : le support (17 lignes, le plus court de toute
+  la revue) ne justifiait ni nouvelle section ni nouveau fichier — un seul
+  bullet ajouté à `rules/python.md` § Configuration, placé là plutôt que
+  `rules/securite-api.md` puisque l'envoi d'email n'est pas circonscrit au
+  code d'API. Cours 25 (Workflow I, `WORKFLOW_I.pptx`), dernier de la
+  revue : support pas encore lu à ce stade — `rules/workflow-session.md`
+  existant porte sur le déroulé d'une session Claude Code, pas sur un sujet
+  de formation, donc pas de lien de nom présumé avant lecture ; vérifier à
+  la lecture si le sujet recoupe de l'orchestration déjà couverte
+  (`rules/deploiement.md` § Prefect/Celery) ou ouvre un thème réellement
+  neuf.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
