@@ -29,8 +29,8 @@ combler les manques « au lieu le plus logique ».
 | 14 | Keras / PyTorch / NLP / audio / Hugging Face | fait |
 | 15 | MLflow | fait |
 | 16 | MLOps 0 → 4 | fait |
-| **17** | **Evidently** | **à faire — reprendre ici** |
-| 18 | Sécurité en Python | à faire |
+| 17 | Evidently | fait |
+| **18** | **Sécurité en Python** | **à faire — reprendre ici** |
 | 19 | hash / cryptage | à faire |
 | 20 | Sécuriser une API FastAPI | à faire |
 | 21 | Vault 1 & 2 | à faire |
@@ -200,6 +200,41 @@ niveau du principe (§ Monitoring d'infrastructure) plutôt que de la recette,
 la configuration precise d'un exporter Python n'étant pas montrée dans le
 support.
 
+Cours 17 (Evidently, 1 support) traité : deck conceptuel court — vocabulaire
+(Report/Metric/Preset, TestSuite, Workspace/Snapshot/Panel/Evidently UI),
+moteur statistique de la dérive, points d'intégration dans le cycle MLOps
+(CI/CD, orchestrateurs, dashboard de production) — sans slide de code (la
+diapositive « Démo de Code » est vide dans l'extraction, démo live non
+capturée). `rules/ml.md` § Portail qualité couvrait déjà Evidently comme
+porte bloquante, mais en confondant implicitement `Report` et le mécanisme de
+blocage. Deux affinages, pas de gap nouveau au sens d'un concept absent
+(commit `feat : Report vs TestSuite, tests statistiques et Workspace
+Evidently dans ml.md`, fusionné dans `develop`) :
+- § Portail qualité avant promotion : `Report` (diagnostic visuel,
+  `DataDriftPreset`/`DataSummaryPreset`/`TargetDriftPreset`) et `TestSuite`
+  (résultat binaire, l'outil réellement fait pour bloquer un pipeline) sont
+  désormais distingués — la porte qualité s'appuie sur un `TestSuite`, pas sur
+  un `Report` dont on extrait les métriques à la main. Bullet neuf sur le choix
+  du test statistique de dérive (Kolmogorov-Smirnov pour une colonne
+  numérique, PSI ou Chi² pour une catégorielle, choix automatique selon
+  type/volume) derrière un seuil relatif, distingué du seuil absolu déjà
+  écrit.
+- § Surveillance en production : bullet neuf sur le `Workspace` et les
+  snapshots JSON comme historique continu (`evidently ui`), distinct de
+  l'archivage par run du Portail qualité — les deux coexistent.
+- `rules/deploiement.md` § Orchestration — Prefect : bullet neuf reliant le
+  `TestSuite` Evidently à une `@task` ordinaire, cohérent avec le point
+  d'intégration « orchestrateur » du support (bloquer entraînement/inférence
+  en aval d'une anomalie détectée sur les données entrantes).
+Pas de nouveau fichier de règle — quatorze règles inchangé.
+
+Non retenu du cours 17, hors périmètre : la panne silencieuse du ML (Data
+Drift/Concept Drift/qualité des données comme motivation) reste du contexte,
+pas une convention actionnable au-delà de ce qui est déjà écrit ; la
+« polyvalence » annoncée vers le texte (NLP) et les logs LLM/RAG n'est pas
+creusée — aucune recette concrète donnée par le support au-delà de
+l'affirmation, et aucun besoin identifié dans le corpus pour l'instant.
+
 ### Décisions techniques prises pendant la revue
 
 - **loguru est obligatoire** (demande explicite, 2026-09-02). Ce n'est plus « un
@@ -226,7 +261,8 @@ support.
 - `rules/documentation.md` — Sphinx, accès depuis le README, publication.
 - `rules/donnees.md` — pandas et seaborn ; un DataFrame n'est pas un stockage.
 - `rules/deploiement.md` (cours 16) — Docker, Compose, MinIO, Prefect, Celery,
-  Kubernetes ; publication d'image en CI ; monitoring d'infrastructure.
+  Kubernetes ; publication d'image en CI ; monitoring d'infrastructure ;
+  `TestSuite` Evidently comme `@task` Prefect ordinaire (cours 17).
 - `modeles/modele-README.md` — squelette de README à copier.
 
 **Modifiés :**
@@ -256,7 +292,7 @@ support.
   `partitionBy` sur une colonne à faible cardinalité, fonctions natives plutôt
   qu'UDF Python, paresse des transformations et `collect()` réservé à un
   agrégat, tests sur `SparkSession` locale).
-- `rules/ml.md` (cours 13 à 16) — pipeline sklearn et rééquilibrage de classes
+- `rules/ml.md` (cours 13 à 17) — pipeline sklearn et rééquilibrage de classes
   dans Fuite de données, section « Recherche d'hyperparamètres », deux bullets
   Métriques (précision/rappel selon coût, MAE vs MSE), section « Apprentissage
   non supervisé » ; en tête de fichier, section « Framework : PyTorch ou
@@ -265,7 +301,10 @@ support.
   tracking/artifact store et `registered_model_name=` dans MLflow, distinction
   `runs:/` vs `models:/` et alias figé (reformulé cours 15, précisé cours 16
   avec le mécanisme de vérification légère) dans Registry et promotion ; deux
-  renvois croisés vers `rules/deploiement.md` (cours 16).
+  renvois croisés vers `rules/deploiement.md` (cours 16) ; distinction `Report`
+  / `TestSuite` et choix du test statistique de dérive dans Portail qualité,
+  `Workspace`/snapshots comme historique continu dans Surveillance en
+  production (cours 17).
 - `README.md`, `modeles/modele-CLAUDE.md` — **quatorze règles** désormais
   (le second listait « onze » pour treize noms déjà énumérés — incohérence
   préexistante corrigée au cours 16).
@@ -299,10 +338,13 @@ support.
   `rules/ml.md`. Cours 16 (Docker/Compose/Prefect/Celery/Kubernetes) a ouvert
   `rules/deploiement.md`, nouveau fichier plutôt qu'une extension de `ml.md` ou
   `donnees.md` — sujet d'infrastructure, pas de cycle de vie du modèle ni de
-  transformation de données. Cours 17 (Evidently) reste à situer : va
-  probablement toucher `rules/ml.md` § Portail qualité (déjà écrit, à cours 13)
-  et § Surveillance en production plutôt qu'ouvrir un nouveau fichier — à
-  confirmer à la lecture du support.
+  transformation de données. Cours 17 (Evidently) confirmé situé dans
+  `rules/ml.md` § Portail qualité et § Surveillance en production, comme
+  anticipé — aucun nouveau fichier. Cours 18 (Sécurité en Python) ira
+  vraisemblablement dans `rules/python.md` § Mots de passe et saisie sensible
+  ou une nouvelle section voisine, à confirmer à la lecture — attention à ne
+  pas dupliquer ce qui est déjà couvert par bcrypt/`pwdlib`/`getpass` (cours 1
+  à 10) avant de l'étoffer.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
@@ -357,3 +399,15 @@ support.
   `rules/deploiement.md` : présenté au niveau notion générale, sans exemple
   Python complet ni lien avec un besoin déjà identifié dans le corpus — à
   ajouter seulement si un cours ultérieur ou un dépôt réel en a l'usage.
+- Point Evidently du CLAUDE.md racine (§ MLOps — « comparer Reference/Current
+  via `Report(metrics=[...])`, utiliser comme gate qualité, lever une
+  exception si un seuil métier est franchi ») confronté au cours 17 : cohérent
+  avec `rules/ml.md` § Portail qualité une fois `TestSuite` distingué de
+  `Report` — le CLAUDE.md racine simplifie (il dit `Report` là où le geste
+  qui bloque vraiment est un `TestSuite`) sans être faux, aucune reformulation
+  nécessaire côté CLAUDE.md racine.
+- Le support Evidently n'a pas de slide de code exploitable (« Démo de Code »
+  vide dans l'extraction PDF) : les ajouts de ce cours s'appuient sur le
+  vocabulaire et les mécanismes décrits en slides, pas sur un extrait de code
+  du support lui-même — à garder en tête si Lionel veut vérifier contre
+  l'API Evidently réelle (versions récentes) avant de s'y fier en production.
