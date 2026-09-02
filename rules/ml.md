@@ -7,8 +7,13 @@ paths:
 
 # Machine learning
 
-<!-- Portée : tout le code ML vit sous src/ml/. C'est ce qui permet à cette
-     règle de ne se charger que là et de ne rien coûter au reste du projet. -->
+<!-- Portée : le code ML vit sous src/ml/, ce qui garde la règle hors du reste
+     du projet. Deux portées s'y ajoutent, et elles sont plus larges que
+     src/ml/ : tout notebook du dépôt (**/*.ipynb), parce qu'un entraînement
+     commence presque toujours là, et les configurations d'expérience
+     (conf/**/*.yaml, à la racine seulement). Un notebook charge donc ml.md et
+     donnees.md ensemble — voulu : donnees.md traite la manipulation du
+     DataFrame, ce fichier traite le dataset comme objet versionné. -->
 
 Un modèle n'est pas du code : il dépend de données, d'aléa et d'un
 environnement. Les règles ci-dessous existent pour qu'un résultat soit
@@ -163,10 +168,11 @@ mesure finale.
 
 ## Apprentissage non supervisé
 
-Le clustering et la réduction de dimension n'ont pas de vérité terrain : les
-sections Baseline, Registry et promotion, et Portail qualité ci-dessus,
-écrites pour un modèle supervisé avec un champion à battre sur un test gelé,
-ne s'appliquent pas telles quelles.
+Le clustering et la réduction de dimension n'ont pas de vérité terrain. Le
+§ Baseline ci-dessus, ainsi que le § Registry et promotion et le § Portail
+qualité avant promotion situés plus bas, sont écrits pour un modèle supervisé
+avec un champion à battre sur un test gelé : ils ne s'appliquent pas tels
+quels.
 
 - Le nombre de clusters (coude, silhouette) est **indicatif**, pas une preuve :
   la validation finale est un avis métier sur des clusters relus à la main, pas
@@ -212,15 +218,16 @@ ne s'appliquent pas telles quelles.
   du code et mise à jour à chaque nouvelle version : bat le champion en place
   sur le test gelé, tient le budget de latence, ne régresse sur aucune tranche
   sensible.
-- Un alias (`@production`, `@champion`) est préférable au numéro de version brut
-  pour sa lisibilité, mais le service ne recharge pas le modèle à chaque appel :
-  il vérifie, via `MlflowClient`, la version actuelle derrière l'alias
-  (`get_model_version_by_alias`, un appel léger au Registry) et ne recharge le
-  modèle complet (`mlflow.pyfunc.load_model`) que si cette version a changé
-  depuis la dernière fois — sert cette **version mise en cache** sinon. Le
-  modèle en mémoire reste donc figé entre deux changements réels de l'alias ; ce
-  qui varie à chaque appel, c'est seulement la question bon marché « la version
-  a-t-elle changé ? », jamais le rechargement lui-même.
+- Un alias (`@production`, `@champion`) est préférable au numéro de version
+  brut : il se lit, et il permet de changer le modèle servi sans redéployer le
+  service.
+- **Le service ne recharge pas le modèle à chaque appel pour autant.** À chaque
+  appel, il ne pose que la question bon marché « quelle version est derrière
+  l'alias ? » (`MlflowClient.get_model_version_by_alias`, un appel léger au
+  Registry). Il ne recharge le modèle complet (`mlflow.pyfunc.load_model`) que
+  si la réponse a changé depuis la dernière fois, et sert la **version mise en
+  cache** sinon. Le modèle en mémoire reste donc figé entre deux changements
+  réels de l'alias.
 - Le champion précédent reste déployable. Retour arrière en une commande.
 
 ## Modèles pré-entraînés — Hugging Face
@@ -234,8 +241,10 @@ sert.
 
 - Chargement épinglé à une révision précise (`revision="<commit ou tag>"`),
   jamais la branche par défaut implicite : un modèle du Hub peut changer sous
-  le même nom, exactement la raison qui interdit déjà de charger un modèle par
-  un stage résolu dynamiquement (§ Registry et promotion ci-dessus).
+  le même nom, sans que rien ne le signale. C'est la même exigence qu'au
+  § Registry et promotion ci-dessus — savoir quelle version exacte est servie,
+  et n'en changer que par un geste tracé : là un alias déplacé dans le
+  Registry, ici une révision modifiée dans la configuration versionnée.
 - Licence du modèle et du dataset vérifiée avant réutilisation, en particulier
   en usage commercial ou sur des données de production : toutes les licences du
   Hub ne sont pas permissives, certaines interdisent l'usage commercial ou
