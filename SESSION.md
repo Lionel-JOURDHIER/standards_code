@@ -24,8 +24,8 @@ combler les manques « au lieu le plus logique ».
 | 9 | Pandas — mon premier CRUD | fait |
 | 10 | SQLAlchemy | fait |
 | 11 | pgvector | fait |
-| **12** | **PySpark** | **à faire — reprendre ici** |
-| 13 | Machine Learning | à faire |
+| 12 | PySpark | fait |
+| **13** | **Machine Learning** | **à faire — reprendre ici** |
 | 14 | Keras / PyTorch / NLP / audio / Hugging Face | à faire |
 | 15 | MLflow | à faire |
 | 16 | MLOps 0 → 4 | à faire |
@@ -43,6 +43,12 @@ Cours 11 (pgvector) traité : nouvelle section « Recherche vectorielle —
 pgvector » dans `rules/bdd.md`, entre Modèles et Requêtes (commit `feat :
 recherche vectorielle pgvector dans bdd.md`, fusionné dans `develop`). Pas de
 nouveau fichier de règle — treize règles inchangé.
+
+Cours 12 (PySpark) traité : nouvelle section « Passage à l'échelle — PySpark »
+dans `rules/donnees.md`, juste avant « Ce qui doit finir en `.py` » (commit
+`feat : passage à l'échelle PySpark dans donnees.md`, fusionné dans
+`develop`). Pas de nouveau fichier de règle — treize règles inchangé, mêmes
+chemins de portée (`etl/`, `pipelines/`, `data/`) déjà suffisants.
 
 ### Décisions techniques prises pendant la revue
 
@@ -91,6 +97,12 @@ nouveau fichier de règle — treize règles inchangé.
   Alembic, `pgvector.sqlalchemy.Vector(N)` plutôt que `psycopg2` brut,
   opérateur de distance selon le cas d'usage, index ANN HNSW/IVFFlat obligatoire
   au-delà de ~10 000 lignes, `EXPLAIN (ANALYZE, BUFFERS)` pour vérifier).
+- `rules/donnees.md` — section « Passage à l'échelle — PySpark » (seuil réel
+  avant de quitter pandas, une seule `SparkSession`, `JAVA_HOME`/`HADOOP_HOME`
+  hors du code, Parquet et schéma explicite plutôt que `inferSchema`,
+  `partitionBy` sur une colonne à faible cardinalité, fonctions natives plutôt
+  qu'UDF Python, paresse des transformations et `collect()` réservé à un
+  agrégat, tests sur `SparkSession` locale).
 - `README.md`, `modeles/modele-CLAUDE.md` — **treize règles** désormais.
 
 ### Vérifié
@@ -118,11 +130,21 @@ nouveau fichier de règle — treize règles inchangé.
   l'instance réelle.
 - Cours 11 (pgvector) a fini dans `rules/bdd.md`, pas `rules/ml.md` : c'est une
   extension PostgreSQL/SQLAlchemy, pas un sujet de cycle de vie modèle. Cours 12
-  à 17 restent à situer ; ceux qui toucheront `rules/ml.md` et `rules/donnees.md`
-  se chargent tous deux sur les notebooks — vérifier qu'ils ne se contredisent
-  pas.
+  (PySpark) a fini dans `rules/donnees.md`, aux côtés de pandas plutôt que dans
+  `rules/ml.md`. Cours 13 à 17 restent à situer ; ceux qui toucheront
+  `rules/ml.md` et `rules/donnees.md` se chargent tous deux sur les notebooks —
+  vérifier qu'ils ne se contredisent pas.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
   SQLAlchemy 2.0 déjà en place — `psycopg2` brut reste toléré pour un script
   d'exploration ponctuel seulement.
+- Divergence assumée ajoutée par le cours 12 : le support fait
+  `os.environ["JAVA_HOME"] = chemin` en dur dans le script Python ; le dépôt
+  renvoie cette variable d'environnement (comme `HADOOP_HOME`) au périmètre du
+  poste/conteneur, pas au code, en application de la règle déjà écrite dans
+  `rules/python.md` § Configuration.
+- Le support PySpark est court (une page de commandes de base) : la règle
+  écrite va au-delà du contenu du cours sur le shuffle/partitionnement et les
+  UDF, à partir de connaissances générales PySpark plutôt que d'un point du
+  support — à signaler si Lionel veut border strictement aux cours.
