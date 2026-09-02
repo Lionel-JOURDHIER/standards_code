@@ -86,11 +86,36 @@ README est inclus dans la page d'accueil de la doc plutôt que recopié :
 - En intégration continue, la construction sert de **contrôle** : un
   avertissement Sphinx fait échouer le job (`-W`), ce qui attrape les
   références cassées et les modules absents du `toctree`.
-- La publication proprement dite est un déploiement ordinaire (artefact
-  récupéré par le serveur, servi par nginx, ou copie sur un partage), décrit
-  dans le `CLAUDE.md` du dépôt.
+- La publication proprement dite est un déploiement ordinaire, décrit dans le
+  `CLAUDE.md` du dépôt. Voir ci-dessous.
 - Tant que rien n'est publié, la section Documentation du README l'assume : une
   URL morte est pire que pas d'URL.
+
+### Servir le HTML, pour avoir une URL à mettre dans le README
+
+Sphinx produit un dossier de fichiers, pas un site. Il n'y a de lien à écrire
+dans le README que si quelqu'un sert ce dossier.
+
+- **Lier un `.html` brut de la forge ne fonctionne pas.** Gitea sert les
+  fichiers bruts en téléchargement ou en texte, pas comme un site navigable, et
+  les liens internes de Sphinx (feuille de style, recherche, renvois entre
+  pages) seraient de toute façon cassés. À ne pas tenter.
+- Consultation locale : `python -m http.server -d public 8000`. Pour soi, pas
+  partageable — donc jamais dans le README comme si c'était une adresse.
+- Adresse partagée : un service statique dans le `docker-compose.yml` du
+  projet, qui monte le dossier construit en lecture seule.
+
+  ```yaml
+  docs:
+    image: nginx:alpine
+    volumes:
+      - ./public:/usr/share/nginx/html:ro
+    ports:
+      - "8081:80"
+  ```
+
+  L'URL devient stable, la CI se contente de reconstruire le dossier, et c'est
+  cette URL qui occupe le point 1 de la section Documentation du README.
 
 ## Ce qui vient des docstrings
 
