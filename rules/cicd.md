@@ -92,6 +92,30 @@ partage), à décrire dans le `CLAUDE.md` du dépôt.
   `rules/python.md`. Derrière le proxy : `uv sync --native-tls`.
 - Un job qui installe des dépendances sans verrou (`uv.lock` absent du dépôt ou
   ignoré) ne teste pas la même chose que le poste de développement.
+- Version de Python écrite dans le workflow et identique à celle du
+  `pyproject.toml`. Une CI qui teste sur la version du runner change de verdict
+  le jour où l'infrastructure est mise à jour, sans qu'aucun commit ne l'ait
+  demandé. Une matrice ne se justifie que si le projet doit réellement
+  fonctionner sur plusieurs versions — sinon elle multiplie le temps de runner
+  pour rien.
+- **Un seul appel à `pytest`** sur la suite entière, jamais une étape par
+  fichier de test : les étapes suivantes ne s'exécutent pas après un échec, ce
+  qui masque tous les autres défauts, et un fichier oublié à l'ajout n'est
+  jamais lancé.
+- Un job d'intégration continue vérifie, il ne corrige pas : pas de commit, pas
+  de formatage automatique repoussé depuis la CI. `ruff format --check`, pas
+  `ruff format`.
+
+## Un échec doit bloquer
+
+Une CI que l'on peut ignorer ne sert qu'à décorer. Le caractère bloquant se
+configure dans les **paramètres du dépôt Gitea** (protection de branche,
+vérifications de statut requises), pas dans le workflow — la clause
+`permissions:` et les règles d'environnement y sont sans effet.
+
+Et la CI ne remplace pas les vérifications locales : elle constate ce qu'on
+aurait dû voir avant de committer. Le crochet `pre-commit` reste le premier
+filet.
 - L'entraînement d'un modèle ne tourne pas en CI : marqué `@pytest.mark.slow` et
   exclu, conformément à `rules/ml.md`.
 
