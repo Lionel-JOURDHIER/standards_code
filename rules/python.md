@@ -184,6 +184,12 @@ def charger_parc(chemin: Path, marche: str) -> dict[str, Logement]:
   défaut pour le développement local.
 - Le basculement entre contextes de déploiement se fait par une variable, pas
   par du code conditionnel dispersé.
+- Envoi d'email (`redmail` par exemple, `from redmail import gmail`) : un
+  **mot de passe d'application dédié** (généré depuis le compte Google,
+  jamais le mot de passe réel du compte — une fuite se révoque alors sans
+  toucher au compte), et `gmail.username`/`gmail.password` chargés depuis
+  l'environnement comme n'importe quel identifiant, jamais écrits en dur
+  dans le script.
 
 ## Mots de passe et saisie sensible
 
