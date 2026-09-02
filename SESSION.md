@@ -1194,3 +1194,55 @@ ce résumé)
   n'existe plus après le push. À repointer sur `main`.
 - Toujours sans réponse : les trois points « à vérifier sur notre instance » de
   `cicd.md`.
+
+## [2026-09-02] — Traefik : le module 8 du cours intégré à deploiement.md
+
+**Branche :** `feature/traefik-module-8`
+
+**Fait :**
+- Reprise complète de `tuto-traefik.html`. Le § Reverse proxy — Traefik ne
+  couvrait que la première moitié du support (vocabulaire, labels, socket,
+  dashboard, CORS, ACME) ; tout le module 8 manquait, ainsi que plusieurs
+  pannes du module dépannage.
+- Ajouts au § existant : priorité par longueur de règle et `PathPrefix` qui
+  compare une chaîne et non des segments (`/apidocs` matche `/api`) ; labels
+  lus à la création du conteneur (`restart` ne relit pas) ; version ≥ v3.6
+  imposée par Docker 29 ; `--providers.docker.network` pour un conteneur sur
+  deux réseaux (504 trompeur) ; provider `file` pour le TLS ; `forwardauth`
+  contre la réimplémentation de l'auth par service ; le proxy ne sert pas de
+  statique ; point de défaillance unique assumé ; diagnostic ordonné (logs,
+  routes connues, logs d'accès) et 504 ajouté aux codes de retour ;
+  métriques de bord vs métriques applicatives.
+- Nouveau § « Reverse proxy devant une IA — répliques, sessions, streaming » :
+  sonde de santé côté proxy (distincte du `healthcheck:` Compose), session
+  MCP non réplicable, cookie collant inopérant pour un client sans session
+  persistante contre `strategy=hrw`, `buffering` qui annule le streaming et
+  les deux réflexes nginx (`compress`, `flushInterval`) démentis par les
+  mesures du support.
+- Deux renvois réciproques dans `rules/agents-ia.md` (§ Connecteur MCP et
+  § Streaming) vers ce nouveau §.
+
+**Décisions techniques :**
+- Un § séparé plutôt qu'un allongement du premier : ces points ne se
+  manifestent qu'au-delà d'un conteneur unique, donc jamais en développement
+  local. Les mélanger aux quatre notions de base aurait noyé les deux.
+- Écarté du support, volontairement : la comparaison Caddy/nginx/Envoy, les
+  terrains d'usage, l'AI Gateway et le MCP Gateway de Traefik Hub (offre
+  commerciale, hors du proxy open source utilisé). Ce sont des éléments de
+  cours, pas des règles applicables à un dépôt.
+- `agents-ia.md` ne duplique pas la règle : il renvoie, parce que le geste
+  est côté déploiement même si la panne se voit côté agent.
+
+**Fichiers principaux modifiés :**
+- `rules/deploiement.md` (236 → 327 lignes), `rules/agents-ia.md` (+8).
+
+**Vérifié :**
+- Aucune ligne de plus de 79 caractères introduite (les deux lignes longues
+  d'`agents-ia.md` préexistaient).
+- Les deux renvois pointent sur un titre de § qui existe réellement.
+
+**Points de vigilance pour la suite :**
+- `deploiement.md` devient la règle la plus longue après `ml.md` : à
+  surveiller, elle se charge sur tout `Dockerfile*` et tout `compose`.
+- Les mesures d'affinité et de streaming du support ont été relevées sur
+  `traefik:v3.6.25` — à revérifier si le proxy change de version majeure.
