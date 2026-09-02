@@ -29,6 +29,11 @@ pour la bonne raison et que son message dit laquelle.
   fixture à la racine est chargée pour tout le monde ; c'est rarement voulu.
 - Un test vérifie **un** comportement. Trois assertions sur la même sortie sont
   un test, trois scénarios en sont trois.
+- **Jamais de `sys.path.insert` ni de bricolage de chemin** dans un test ou dans
+  un `__init__.py` pour retrouver le code. Le symptôme dit que le projet n'est
+  pas installé : disposition `src/`, `uv sync`, et l'import fonctionne
+  identiquement en local et en CI. Un chemin calculé à partir de `__file__`
+  dépend du répertoire depuis lequel on lance pytest.
 
 ## Fixtures
 
