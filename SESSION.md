@@ -28,8 +28,8 @@ combler les manques « au lieu le plus logique ».
 | 13 | Machine Learning | fait |
 | 14 | Keras / PyTorch / NLP / audio / Hugging Face | fait |
 | 15 | MLflow | fait |
-| **16** | **MLOps 0 → 4** | **à faire — reprendre ici** |
-| 17 | Evidently | à faire |
+| 16 | MLOps 0 → 4 | fait |
+| **17** | **Evidently** | **à faire — reprendre ici** |
 | 18 | Sécurité en Python | à faire |
 | 19 | hash / cryptage | à faire |
 | 20 | Sécuriser une API FastAPI | à faire |
@@ -129,6 +129,77 @@ registered_model_name et alias figé dans ml.md`, fusionné dans `develop`) :
   interdiction des alias.
 Pas de nouveau fichier de règle — treize règles inchangé.
 
+Cours 16 (MLOps 0 → 4, 7 supports — Intro, Packaging, Orchestration, Factory,
+Automation, Monitoring, Advanced ; `Copie_de_MLOPS_4_Advanced.pptx` écarté :
+brouillon tronqué du même support, sans contenu propre) traité. `MLOPS_0_Intro`
+et `MLOPS_0_PACKAGING` ne font que confirmer, sans rien ajouter, ce qui est
+déjà écrit dans `rules/python.md` (uv, ruff, dependency-groups),
+`rules/tests-python.md` et `rules/cicd.md` (structure de la CI). Le reste
+(Compose, MinIO, Prefect, Celery, Kubernetes) n'avait de domicile dans aucune
+règle existante — vérification faite contre le `CLAUDE.md` racine du dossier
+de formation (point de vigilance laissé au cours 15) : son § MLOps couvre les
+mêmes sujets sans contredire ce qui suit, une fois l'alias MLflow reformulé au
+cours 15. **Nouveau fichier `rules/deploiement.md`** (commit `feat : nouvelle
+règle deploiement.md — Docker, Compose, Prefect, Celery, Kubernetes`, fusionné
+dans `develop`) — quatorzième règle du dépôt, `README.md` et
+`modeles/modele-CLAUDE.md` mis à jour en conséquence (le second listait
+« onze » alors qu'il énumérait déjà treize noms : incohérence préexistante
+corrigée au passage) :
+- § Dockerfile : image `uv` officielle, `pyproject.toml`/`uv.lock` copiés avant
+  le reste du code pour le cache de build, `.dockerignore`, aucun secret figé
+  en `ENV`, modèle/dataset jamais copiés dans l'image (montés en volume —
+  cohérent avec le `CLAUDE.md` racine § Packaging).
+- § Docker Compose : `.env`/`.env.example`, une variable n'atteint un service
+  que si son bloc `environment:` la référence, volume nommé pour ce qui doit
+  survivre à `down`, limite mémoire par service, réseau dédié pour isoler ce
+  qui doit se parler — renvoi à `rules/securite-api.md` sur l'esprit
+  moindre-privilège.
+- § Stockage objet — MinIO : une instance, deux buckets (DVC / MLflow),
+  création de bucket idempotente, identifiants en variable d'environnement.
+- § Orchestration — Prefect : `@flow`/`@task`, `retries` sur ce qui dépend
+  d'un réseau, `cache_key_fn` ; `.serve()` réservé au développement,
+  `prefect deploy` + `prefect.yaml` (work pool, worker persistant) en
+  production ; rappel que les règles de `rules/ml.md` s'appliquent toujours
+  à l'intérieur de chaque tâche orchestrée.
+- § Celery : `.delay()` pour ne jamais bloquer une requête sur un traitement
+  lourd, arbitrage Redis (rapide, sans garantie) / RabbitMQ (livraison
+  confirmée), Flower comme seul point de visibilité, nommage des workers
+  incompatible avec le scaling horizontal.
+- § Kubernetes : Kubernetes ne construit pas d'image (Compose reste l'étape de
+  validation locale avant migration), `Deployment`+`Service` comme paire
+  indissociable reliée par étiquette, HPA limité au CPU/RAM (KEDA pour la
+  profondeur de file), `describe pod` pour ce que les logs ne montrent pas.
+- § Publication d'image en CI : registre interne plutôt que Docker Hub,
+  renvoi à `rules/cicd.md` § Jetons et secrets (pas d'OIDC disponible).
+- § Monitoring d'infrastructure : distingue explicitement de `rules/ml.md`
+  § Surveillance en production — santé du conteneur contre justesse du modèle,
+  ni l'un ni l'autre ne dispense du second.
+
+Deux affinages et un ajout dans `rules/ml.md` à cette occasion :
+- § Registry et promotion : le bullet sur l'alias figé (reformulé au cours 15)
+  est précisé avec le mécanisme concret montré par le support — vérification
+  légère de la version derrière l'alias (`get_model_version_by_alias`) à
+  chaque appel, rechargement du modèle complet seulement si elle a changé. Ne
+  change pas la règle, la rend vérifiable contre un exemple de code réel.
+- § MLflow et § Surveillance en production : un renvoi croisé chacun vers
+  `rules/deploiement.md` (stockage objet ; monitoring infrastructure).
+
+`rules/cicd.md` § Jetons et secrets gagne un bullet sur le scan de secrets
+(Gitleaks), absent jusqu'ici : `fetch-depth: 0`, échec bloquant, et le rappel
+qu'un secret poussé reste compromis même corrigé ensuite — seule la rotation
+répare, cohérent avec la section déjà en place sur la rotation des jetons
+Gitea.
+
+Non retenu du cours 16, hors périmètre : Gitleaks lui-même n'est pas détaillé
+au-delà de son usage en CI (pas d'outil de scan local) ; Kafka (Producer/
+Consumer/Topic, `MLOPS_4_Advanced` slides 3-10) écarté — présenté comme notion
+générale de streaming, sans lien avec le reste du corpus (pas de Kafka ailleurs
+dans les 25 cours) ni avec un besoin déjà écrit dans les règles ; Uptime Kuma
+et le détail Prometheus/Grafana (fichiers de config, dashboards) restent au
+niveau du principe (§ Monitoring d'infrastructure) plutôt que de la recette,
+la configuration precise d'un exporter Python n'étant pas montrée dans le
+support.
+
 ### Décisions techniques prises pendant la revue
 
 - **loguru est obligatoire** (demande explicite, 2026-09-02). Ce n'est plus « un
@@ -149,11 +220,13 @@ Pas de nouveau fichier de règle — treize règles inchangé.
 
 ### Fichiers modifiés ou créés
 
-**Nouveaux (3 règles, 1 modèle) :**
+**Nouveaux (4 règles, 1 modèle) :**
 - `rules/tests-python.md` — pytest, seul endroit où le DRY du socle ne
   s'applique pas.
 - `rules/documentation.md` — Sphinx, accès depuis le README, publication.
 - `rules/donnees.md` — pandas et seaborn ; un DataFrame n'est pas un stockage.
+- `rules/deploiement.md` (cours 16) — Docker, Compose, MinIO, Prefect, Celery,
+  Kubernetes ; publication d'image en CI ; monitoring d'infrastructure.
 - `modeles/modele-README.md` — squelette de README à copier.
 
 **Modifiés :**
@@ -169,7 +242,8 @@ Pas de nouveau fichier de règle — treize règles inchangé.
 - `rules/tests-python.md` — `TestClient`, pas de `sys.path.insert`,
   `[tool.pytest.ini_options]`, couverture hors des options par défaut.
 - `rules/cicd.md` — version de Python alignée, un seul appel `pytest`, une CI
-  vérifie et ne corrige pas, section « Un échec doit bloquer ».
+  vérifie et ne corrige pas, section « Un échec doit bloquer », scan de
+  secrets Gitleaks sous Jetons et secrets (cours 16).
 - `rules/bdd.md` — deux styles 1.x/2.0, sync ou async, `session.dispose()`
   n'existe pas, conception Merise, `WHERE`/`HAVING`, `echo=True` hors livré,
   section « Recherche vectorielle — pgvector » (extension activée en migration
@@ -182,7 +256,19 @@ Pas de nouveau fichier de règle — treize règles inchangé.
   `partitionBy` sur une colonne à faible cardinalité, fonctions natives plutôt
   qu'UDF Python, paresse des transformations et `collect()` réservé à un
   agrégat, tests sur `SparkSession` locale).
-- `README.md`, `modeles/modele-CLAUDE.md` — **treize règles** désormais.
+- `rules/ml.md` (cours 13 à 16) — pipeline sklearn et rééquilibrage de classes
+  dans Fuite de données, section « Recherche d'hyperparamètres », deux bullets
+  Métriques (précision/rappel selon coût, MAE vs MSE), section « Apprentissage
+  non supervisé » ; en tête de fichier, section « Framework : PyTorch ou
+  Keras », fenêtre glissante dans Données, vectoriseur de texte dans Fuite de
+  données, section « Modèles pré-entraînés — Hugging Face » ; séparation
+  tracking/artifact store et `registered_model_name=` dans MLflow, distinction
+  `runs:/` vs `models:/` et alias figé (reformulé cours 15, précisé cours 16
+  avec le mécanisme de vérification légère) dans Registry et promotion ; deux
+  renvois croisés vers `rules/deploiement.md` (cours 16).
+- `README.md`, `modeles/modele-CLAUDE.md` — **quatorze règles** désormais
+  (le second listait « onze » pour treize noms déjà énumérés — incohérence
+  préexistante corrigée au cours 16).
 
 ### Vérifié
 
@@ -210,9 +296,13 @@ Pas de nouveau fichier de règle — treize règles inchangé.
 - Cours 11 (pgvector) a fini dans `rules/bdd.md`, pas `rules/ml.md` : c'est une
   extension PostgreSQL/SQLAlchemy, pas un sujet de cycle de vie modèle. Cours 12
   (PySpark) a fini dans `rules/donnees.md`, aux côtés de pandas plutôt que dans
-  `rules/ml.md`. Cours 13 à 17 restent à situer ; ceux qui toucheront
-  `rules/ml.md` et `rules/donnees.md` se chargent tous deux sur les notebooks —
-  vérifier qu'ils ne se contredisent pas.
+  `rules/ml.md`. Cours 16 (Docker/Compose/Prefect/Celery/Kubernetes) a ouvert
+  `rules/deploiement.md`, nouveau fichier plutôt qu'une extension de `ml.md` ou
+  `donnees.md` — sujet d'infrastructure, pas de cycle de vie du modèle ni de
+  transformation de données. Cours 17 (Evidently) reste à situer : va
+  probablement toucher `rules/ml.md` § Portail qualité (déjà écrit, à cours 13)
+  et § Surveillance en production plutôt qu'ouvrir un nouveau fichier — à
+  confirmer à la lecture du support.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
@@ -248,8 +338,22 @@ Pas de nouveau fichier de règle — treize règles inchangé.
   auto-encodeurs, GAN, diffusion, comparatif Hugging Face vs GitHub.
 - Cours 15 a mis au jour une tension entre `rules/ml.md` § Registry et
   promotion et le CLAUDE.md racine du dossier de formation sur le
-  chargement par alias — reconciliée (voir plus haut), mais à garder en tête
-  pour le cours 16 (MLOps 0 → 4) qui va probablement retoucher Registry,
-  promotion et déploiement : vérifier qu'aucun autre point du CLAUDE.md racine
-  n'entre en tension avec ce qui a été écrit dans `rules/ml.md` jusqu'ici,
-  plutôt que de découvrir les écarts un par un.
+  chargement par alias — reconciliée (voir plus haut). Vérification
+  holistique faite au cours 16 : le § MLOps du CLAUDE.md racine (MLflow,
+  Packaging/uv, Orchestration/Prefect, Docker Compose → Kubernetes, Celery,
+  Evidently) a été relu entièrement contre `rules/ml.md` et le nouveau
+  `rules/deploiement.md` — aucune autre tension trouvée, le contenu du
+  CLAUDE.md racine est soit déjà couvert (packaging uv, MinIO, Prefect
+  serve/deploy), soit repris tel quel (modèle jamais copié dans l'image,
+  registre interne). Le point Evidently du CLAUDE.md racine reste à
+  confronter en détail au cours 17.
+- Divergence assumée, cours 16 : `MLOPS_2_Factory` montre
+  `client.get_latest_versions(model_name, stages=["None"])[0]` pour retrouver
+  « la dernière version créée » avant de lui poser un alias — l'API `stages`
+  est dépréciée depuis MLflow 2.x (remplacée par les alias eux-mêmes) et
+  n'a pas été reprise dans `rules/deploiement.md` ni `rules/ml.md` ; seul le
+  geste `set_registered_model_alias` a été retenu comme pattern utile.
+- Kafka (`MLOPS_4_Advanced`, ~8 slides) volontairement absent de
+  `rules/deploiement.md` : présenté au niveau notion générale, sans exemple
+  Python complet ni lien avec un besoin déjà identifié dans le corpus — à
+  ajouter seulement si un cours ultérieur ou un dépôt réel en a l'usage.
