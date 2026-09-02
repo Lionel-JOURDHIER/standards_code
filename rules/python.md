@@ -18,6 +18,31 @@ paths:
 - Ce que ruff vérifie n'a pas à être répété ici : longueur de ligne, ordre des
   imports, guillemets, présence des docstrings.
 
+## Structure d'un projet
+
+- Le code vit sous `src/<nom_du_package>/`, jamais à la racine. **Le nom du
+  package suit le nom du dépôt.** La racine ne porte que ce qui décrit le
+  projet : `pyproject.toml`, `README.md`, `CLAUDE.md`, la CI, le Dockerfile.
+- `__init__.py` déclare l'API publique du package avec `__all__`. Ce qui n'y
+  figure pas est un détail d'implémentation : on peut le renommer sans prévenir.
+  C'est ce qui rend l'interdiction de `import *` tenable au lieu d'arbitraire.
+- Les tests vivent dans `tests/` à la racine, hors du package livré.
+- Un module exécutable protège son point d'entrée par
+  `if __name__ == "__main__":`, et cette clause ne contient qu'un appel. La
+  logique est dans une fonction importable, donc testable — sans quoi elle
+  s'exécute au moindre import et ne peut être appelée par rien d'autre.
+
+## Classes
+
+- `@property` / `@x.setter` avec validation qui lève `ValueError` dès qu'un
+  attribut doit respecter une règle (bornes, format, cohérence avec un autre
+  champ). Un attribut public non contrôlé délègue la vérification à chaque
+  appelant, donc à aucun.
+- Pas de `get_x()` / `set_x()` sans logique : en Python c'est un attribut, et on
+  ajoute la `property` le jour où une règle apparaît, sans changer les appelants.
+- Un objet qui ne fait que porter des champs est une `dataclass`, pas une classe
+  écrite à la main.
+
 ## Docstrings
 
 Style Google, en français. Contrôlé par la règle `D` de ruff quand le projet
