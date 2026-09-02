@@ -18,9 +18,9 @@ paths:
      l'implémentation ; `rules/securite-api.md` § Si le modèle servi est un
      LLM garde le résumé et pointe ici. Idem `rules/bdd.md` § Recherche
      vectorielle — pgvector pour l'index/les opérateurs côté SQLAlchemy,
-     et `rules/ml.md` § Portail qualité / Surveillance en production pour
-     la philosophie de porte qualité et de traçage, appliquée ici par tour
-     d'agent plutôt que par déploiement de modèle. -->
+     et `rules/ml.md` § Portail qualité avant promotion et § Surveillance en
+     production pour la philosophie de porte qualité et de traçage,
+     appliquée ici par tour d'agent plutôt que par déploiement de modèle. -->
 
 ## Chaînes LCEL et objets typés
 
@@ -83,7 +83,7 @@ plantage, pas comme un calcul en cours.
 - L'embedding utilisé à l'indexation et à la recherche doit venir de la
   **même famille de modèle** : changer de modèle d'embedding impose une
   réindexation complète, la dimension du vecteur ne se convertit pas
-  (`bdd.md` § Recherche vectorielle — pgvector documente l'immutabilité de
+  (`rules/bdd.md` § Recherche vectorielle — pgvector documente l'immutabilité de
   la dimension côté SQLAlchemy ; FAISS échoue avec la même contrainte, par
   une erreur de dimension explicite à l'ouverture de l'index).
 - Le `PGVector` de LangChain (chaîne de connexion, `use_jsonb=True`,
