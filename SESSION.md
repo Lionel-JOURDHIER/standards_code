@@ -1084,9 +1084,9 @@ Forest) dans ml.md`, fusionné `--no-ff` dans `develop`, branche supprimée.
 ce résumé)
 
 **Fait :**
-- `git config --global user.email` passé de `lio.jourdhier@gmail.com` à
-  `l'adresse professionnelle`, conformément au socle (§ Commits, « l'auteur du
-  commit doit être identifiable […] avec l'adresse professionnelle »).
+- `git config --global user.email` passé de l'adresse personnelle à l'adresse
+  professionnelle, conformément au socle (§ Commits, « l'auteur du commit doit
+  être identifiable […] avec l'adresse professionnelle »).
   Sauvegarde de l'ancien fichier dans `~/.gitconfig.bak-20260902`.
 
 **Décisions techniques :**
@@ -1100,10 +1100,48 @@ ce résumé)
   divergence avec les copies déjà distribuées.
 
 **Vérifié :**
-- Commit d'essai dans un dépôt jetable : auteur
-  `Lionel JOURDHIER <l'adresse professionnelle>`. `user.name` inchangé.
+- Commit d'essai dans un dépôt jetable : auteur portant la nouvelle adresse,
+  `user.name` inchangé.
 
 **Points de vigilance pour la suite :**
 - Il reste, de l'audit de lisibilité, les trois points « à vérifier sur notre
   instance » de `cicd.md` (expressions autres qu'`always()`, `actions/cache`,
   lecture de `.github/workflows`), toujours sans réponse.
+
+## [2026-09-02] — Retrait de toute mention de l'employeur
+
+**Branche :** `develop` (réglage de poste + ce résumé)
+
+**Fait :**
+- `git config --global user.email` remis à l'adresse personnelle. Aucune
+  sauvegarde intermédiaire conservée : elle aurait contenu l'adresse retirée, et
+  `~/.gitconfig.bak-20260902` garde déjà l'état d'origine. Aucun réglage local
+  au dépôt n'existait, donc rien à défaire de ce côté.
+- Les deux mentions littérales de l'adresse professionnelle dans l'entrée
+  « Adresse de commit corrigée » ci-dessus remplacées par des tournures
+  génériques. L'entrée reste lisible : elle raconte le même changement, sans
+  nommer le domaine.
+
+**Décisions techniques :**
+- Le socle garde sa formulation « avec l'adresse professionnelle » (§ Commits) :
+  elle ne nomme aucun employeur, c'est une règle et non une donnée.
+- **Historique non réécrit.** Trois commits portent l'ancienne adresse, dont
+  `2060bf9 feat : socle initial`, qui est le **commit racine** : les retirer
+  réécrirait les 105 commits du dépôt, donc tous les hachages. Or `develop` et
+  `main` sont déjà poussés sur le remote (constaté dans les reflogs
+  `origin/*`, « update by push »), et le sous-module `.claude/standards` de
+  HorRAGor est épinglé sur `cd6dc95`, qui disparaîtrait. La réécriture est donc
+  une décision de l'utilisateur, pas un effet de bord de ce nettoyage.
+
+**Vérifié :**
+- Recherche insensible à la casse du nom de l'employeur sur l'arborescence hors
+  `.git`, et sur `~/.gitconfig` : aucune occurrence.
+- `git config --get user.email` retourne l'adresse personnelle ; `user.name`
+  inchangé.
+
+**Points de vigilance pour la suite :**
+- Les trois commits porteurs de l'ancienne adresse subsistent dans
+  l'historique, local et distant. Tant qu'ils y sont, l'information reste
+  accessible par `git log`.
+- Toujours sans réponse : les trois points « à vérifier sur notre instance » de
+  `cicd.md`.
