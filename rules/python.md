@@ -72,6 +72,12 @@ def charger_parc(chemin: Path, marche: str) -> dict[str, Logement]:
   c'est le seul endroit où l'appelant peut l'apprendre.
 - Fonctions privées (`_nom`) : docstring seulement si la logique n'est pas
   triviale.
+- Une classe documente ses attributs publics dans sa propre docstring, section
+  `Attributes:`, et pas dans celle de `__init__` : c'est la classe qu'on
+  consulte, pas son constructeur.
+- Pas d'exemple d'utilisation dans une docstring. Rien ne l'exécute, donc il
+  ment tôt ou tard sans que personne ne s'en aperçoive. Un exemple qui doit
+  rester juste est un test — voir `rules/tests-python.md`.
 
 ## Typage
 
