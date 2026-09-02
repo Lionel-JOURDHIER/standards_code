@@ -60,33 +60,12 @@ porte une section **Documentation** qui donne, dans cet ordre :
 3. un lien relatif vers les guides en Markdown de `docs/`, qui fonctionne dans
    l'interface de Gitea sans rien construire.
 
-Bloc à recopier dans le README, à adapter au dépôt :
-
-````markdown
-## Documentation
-
-- **En ligne** : <https://…>  *(à remplacer, ou à supprimer si non publiée)*
-- **En local** — construire puis ouvrir :
-
-  ```bash
-  uv run sphinx-build -b html docs/source public
-  ```
-
-  | Environnement | Ouvrir la page d'accueil |
-  |---|---|
-  | Windows | `start public\index.html` |
-  | WSL | `explorer.exe public\index.html` |
-  | Linux bureau | `xdg-open public/index.html` |
-  | macOS | `open public/index.html` |
-  | Serveur sans navigateur | `python -m http.server -d public 8000`, puis <http://localhost:8000> |
-
-- **Sans rien construire** : [guides](docs/source/guides/).
-````
-
-Sous WSL, `xdg-open` échoue le plus souvent faute d'environnement de bureau :
-c'est `explorer.exe` qui ouvre le navigateur Windows, et il attend une barre
-oblique inverse. La dernière ligne du tableau est aussi celle qui sert quand la
-doc est construite sur un serveur.
+Le bloc à recopier est dans `.claude/standards/modeles/modele-README.md`,
+section Documentation : la commande de construction, puis un tableau donnant la
+commande d'ouverture par environnement — `start`, `explorer.exe`, `xdg-open`,
+`open`, ou un serveur local quand la machine n'a pas de navigateur. Sous WSL en
+particulier, `xdg-open` échoue faute d'environnement de bureau et c'est
+`explorer.exe` qui ouvre le navigateur Windows.
 
 Le troisième point est ce qui garantit l'accessibilité : un lien relatif reste
 valide dans Gitea, dans un clone, et dans la doc construite. Réciproquement, le

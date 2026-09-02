@@ -19,6 +19,7 @@ rules/http.md            idem clients/, integrations/ — appels HTTP sortants
 rules/documentation.md   idem docs/, conf.py, .rst, README.md — Sphinx
 rules/workflow-session.md déroulé d'une session, chargé toujours
 modeles/modele-CLAUDE.md à copier en CLAUDE.md et remplir dans un nouveau dépôt
+modeles/modele-README.md à copier en README.md et remplir dans un nouveau dépôt
 modeles/FICHE-MODELE.md  une par modèle promu en production
 hooks/pre-commit         garde-fou git, configurable par dépôt
 hooks/standards.conf.exemple
@@ -32,6 +33,7 @@ tests/banc-hook.sh       banc de test du hook, à relancer après l'avoir modifi
 git submodule add <url>/standards-code.git .claude/standards
 mkdir -p .claude/rules .githooks
 cp .claude/standards/modeles/modele-CLAUDE.md CLAUDE.md
+cp .claude/standards/modeles/modele-README.md README.md
 cp .claude/standards/hooks/pre-commit .githooks/pre-commit
 cp .claude/standards/hooks/standards.conf.exemple .githooks/standards.conf
 chmod +x .githooks/pre-commit
