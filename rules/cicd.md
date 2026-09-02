@@ -110,6 +110,8 @@ partage), à décrire dans le `CLAUDE.md` du dépôt.
 - Un job d'intégration continue vérifie, il ne corrige pas : pas de commit, pas
   de formatage automatique repoussé depuis la CI. `ruff format --check`, pas
   `ruff format`.
+- L'entraînement d'un modèle ne tourne pas en CI : marqué `@pytest.mark.slow` et
+  exclu, conformément à `rules/ml.md`.
 
 ## Un échec doit bloquer
 
@@ -121,14 +123,16 @@ vérifications de statut requises), pas dans le workflow — la clause
 Et la CI ne remplace pas les vérifications locales : elle constate ce qu'on
 aurait dû voir avant de committer. Le crochet `pre-commit` reste le premier
 filet.
-- L'entraînement d'un modèle ne tourne pas en CI : marqué `@pytest.mark.slow` et
-  exclu, conformément à `rules/ml.md`.
 
 ## À vérifier sur notre instance avant d'y compter
 
 La compatibilité varie selon la version de Gitea et celle d'`act_runner`. Ces
 trois points décident de la forme des workflows et n'ont pas de réponse
-générale — les tester une fois, écrire la réponse ici :
+générale — les tester une fois, puis écrire la réponse **dans `standards-code`,
+sur une branche, et pas dans la copie locale de `.claude/rules/`** : cette
+copie est écrasée à la prochaine mise à jour du sous-module. Ce qui ne vaut que
+pour un dépôt (le label de runner réellement disponible, par exemple) va dans
+son `CLAUDE.md`.
 
 - Les expressions autres que `always()` — `success()`, `failure()`,
   `hashFiles()`, `contains()`. La documentation ne garantit qu'`always()`. Sans
