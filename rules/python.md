@@ -113,6 +113,20 @@ def charger_parc(chemin: Path, marche: str) -> dict[str, Logement]:
   si le niveau est actif.
 - Niveaux : `debug` pour le détail technique, `info` pour le suivi normal d'une
   étape, `warning` pour un cas dégradé mais géré, `error` pour un échec.
+- Dans un `except`, `logger.exception("…")` et pas `logger.error(str(err))` :
+  seul le premier joint la trace. Sans elle, il reste le message d'une erreur
+  dont on ne sait plus d'où elle vient.
+- **Ne jamais journaliser un mot de passe, un jeton, une clé, ni une donnée
+  personnelle** — un journal est lu, copié et conservé plus longtemps que le
+  reste. Vaut partout, pas seulement sur une API (voir
+  `rules/securite-api.md`).
+- Un sink fichier a une rotation et une rétention
+  (`rotation="10 MB"`, `retention="7 days"`, `compression="zip"`), sinon le
+  fichier grossit jusqu'à remplir le disque de la machine qui héberge le
+  service. `enqueue=True` dès que plusieurs processus ou threads écrivent.
+- Rien dans une boucle serrée ni sur un chemin appelé à chaque itération : un
+  journal saturé ne se lit plus, et le coût d'écriture devient celui du
+  traitement. Ce qui est répétitif se journalise agrégé, une fois à la fin.
 
 ## Configuration
 
