@@ -230,7 +230,9 @@ suffit pas.
 
 L'injection de prompt n'a pas de correctif unique : c'est de la défense en
 profondeur, à traiter comme un risque accepté et borné, pas comme un bug à
-fermer.
+fermer. Implémentation (taxonomie d'attaque, quatre niveaux de défense,
+guardrail structuré) dans `rules/agents-ia.md` § Sécurité — injection de
+prompt.
 
 ## Réponses d'erreur
 

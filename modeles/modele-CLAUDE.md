@@ -63,10 +63,10 @@ réelles — sur demande explicite uniquement.
 ---
 
 <!-- Règles par langage : ne PAS les mettre ici, et ne pas les écrire à la main.
-     Le sous-module en contient seize, déjà rédigées et versionnées, dans
+     Le sous-module en contient dix-sept, déjà rédigées et versionnées, dans
      .claude/standards/rules/ : python, tests-python, javascript, nodejs, vba,
-     ml, donnees, bdd, deploiement, securite-api, streamlit, selenium, cicd,
-     http, documentation, workflow-session.
+     ml, donnees, bdd, deploiement, securite-api, agents-ia, streamlit,
+     selenium, cicd, http, documentation, workflow-session.
 
      On copie celles qui servent, une par une, comme décrit dans le README du
      sous-module :
