@@ -1077,3 +1077,33 @@ Forest) dans ml.md`, fusionné `--no-ff` dans `develop`, branche supprimée.
 - Reste de l'audit de lisibilité : l'adresse de commit (gmail au lieu de
   l'adresse professionnelle) et les trois points « à vérifier sur notre
   instance » de `cicd.md`, toujours sans réponse.
+
+## [2026-09-02] — Adresse de commit corrigée
+
+**Branche :** `develop` (réglage de poste, aucun fichier du dépôt modifié à part
+ce résumé)
+
+**Fait :**
+- `git config --global user.email` passé de `lio.jourdhier@gmail.com` à
+  `l'adresse professionnelle`, conformément au socle (§ Commits, « l'auteur du
+  commit doit être identifiable […] avec l'adresse professionnelle »).
+  Sauvegarde de l'ancien fichier dans `~/.gitconfig.bak-20260902`.
+
+**Décisions techniques :**
+- Réglage **global** et non local au dépôt : l'adresse était déjà dans
+  `~/.gitconfig`, et le socle parle d'un réglage de poste. Tous les dépôts de la
+  machine sont donc concernés, y compris les dépôts personnels — c'est
+  l'intention de la règle, et le changement se défait par une commande.
+- **Historique existant non réécrit.** Tous les commits antérieurs restent
+  signés avec l'ancienne adresse : le socle interdit de réécrire l'historique
+  sans demande explicite, et ici la réécriture n'apporterait rien qu'une
+  divergence avec les copies déjà distribuées.
+
+**Vérifié :**
+- Commit d'essai dans un dépôt jetable : auteur
+  `Lionel JOURDHIER <l'adresse professionnelle>`. `user.name` inchangé.
+
+**Points de vigilance pour la suite :**
+- Il reste, de l'audit de lisibilité, les trois points « à vérifier sur notre
+  instance » de `cicd.md` (expressions autres qu'`always()`, `actions/cache`,
+  lecture de `.github/workflows`), toujours sans réponse.
