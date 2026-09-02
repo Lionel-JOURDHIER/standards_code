@@ -119,6 +119,44 @@ Il vit en mémoire : rien n'y est persistant, unique, ni transactionnel, et deux
   plus : pas de contrainte, pas de verrou, et un plantage en cours d'écriture
   laisse un fichier tronqué.
 
+## Passage à l'échelle — PySpark
+
+PySpark n'est pas un remplacement par défaut de pandas : on y passe quand un
+jeu ne tient plus en mémoire sur un poste ou en CI, pas par anticipation. Le
+code de transformation reste soumis aux mêmes règles que plus haut (pas de
+boucle ligne à ligne, décision de nettoyage explicite et testée) ; ce qui
+change est l'exécution, distribuée et paresseuse.
+
+- Une seule `SparkSession`, créée au démarrage
+  (`SparkSession.builder.appName(...).getOrCreate()`) et réutilisée — pas une
+  par fonction. `spark.stop()` en fin de programme.
+- `JAVA_HOME`/`HADOOP_HOME` sont des prérequis d'environnement (JDK, Hadoop),
+  documentés dans le README/CLAUDE.md du dépôt et positionnés hors du code —
+  `os.environ["JAVA_HOME"] = "chemin en dur"` dans un script viole la règle
+  déjà écrite dans `rules/python.md` § Configuration.
+- **Parquet** en entrée et en sortie des étapes intermédiaires, pour la même
+  raison qu'avec pandas (types, valeurs nulles, compression conservés). Un CSV
+  n'est accepté qu'en entrée quand la source l'impose, avec un schéma explicite
+  (`schema=`) plutôt que `inferSchema=True` : l'inférence relit tout le fichier
+  une première fois pour deviner les types, et peut deviner faux.
+- `partitionBy()` sur une colonne à faible cardinalité et effectivement filtrée
+  ensuite (date, région) — jamais sur une colonne à forte cardinalité (un
+  identifiant), qui éclate l'écriture en milliers de petits fichiers.
+  `repartition()` n'est pas un réflexe : l'opération déclenche un brassage
+  réseau (*shuffle*) coûteux, à réserver à un déséquilibre réel avant une
+  jointure ou une agrégation lourde.
+- Fonctions natives (`pyspark.sql.functions`, `groupBy`, `filter`) plutôt
+  qu'une UDF Python : une UDF casse la parallélisation JVM et sérialise chaque
+  ligne individuellement. Si aucune fonction native ne convient, une UDF
+  pandas (vectorisée, par lot) plutôt qu'une UDF ligne à ligne.
+- Les transformations (`filter`, `select`, `groupBy`) sont paresseuses et ne
+  s'exécutent qu'à une action (`show`, `write`, `collect`). `collect()` ramène
+  tout sur le driver : à réserver à un résultat déjà réduit (un agrégat), jamais
+  au jeu complet — c'est le cas d'usage qu'on cherchait justement à éviter en
+  passant à Spark.
+- Tests sur une `SparkSession` locale (`local[1]` ou `local[*]`), créée une
+  fois en fixture partagée, jamais contre un vrai cluster.
+
 ## Ce qui doit finir en `.py`
 
 Un notebook explore. Dès qu'une transformation est retenue, elle devient une
