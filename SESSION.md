@@ -35,8 +35,8 @@ combler les manques « au lieu le plus logique ».
 | 20 | Sécuriser une API FastAPI | fait |
 | 21 | Vault 1 & 2 | fait |
 | 22 | Streamlit | fait |
-| **23** | **Selenium** | **à faire — reprendre ici** |
-| 24 | Redmail | à faire |
+| 23 | Selenium | fait |
+| **24** | **Redmail** | **à faire — reprendre ici** |
 | 25 | Workflow I | à faire |
 
 Cours 11 (pgvector) traité : nouvelle section « Recherche vectorielle —
@@ -449,6 +449,44 @@ le corpus.
 
 Quinze règles au total à partir de ce cours.
 
+Cours 23 (Selenium, 1 support) traité, sans agent (demande explicite). Même
+figure que Streamlit : `grep -rln -i selenium rules/ README.md modeles/` ne
+retournait rien avant ce cours, seul le `CLAUDE.md` racine en parlait (§
+Applications — Selenium, une phrase). **Nouveau fichier `rules/selenium.md`**
+(commit `feat : nouvelle règle selenium.md — driver, locators, WebDriverWait,
+éthique du scraping`, fusionné dans `develop`) — seizième règle du dépôt,
+`README.md` et `modeles/modele-CLAUDE.md` mis à jour. Le mini-cours (setup,
+locators, deux démos books.toscrape.com/quotes.toscrape.com) confirme déjà
+l'essentiel de la phrase du CLAUDE.md racine (BeautifulSoup pour le
+statique/Selenium pour le dynamique, jamais `time.sleep()` mais
+`WebDriverWait`/`expected_conditions`, `driver.quit()`, RGPD/robots.txt/CGU)
+et ajoute deux gestes concrets absents du CLAUDE.md racine :
+- § Driver : `webdriver_manager` (`ChromeDriverManager().install()` +
+  `Service(...)`) plutôt qu'un binaire `chromedriver` téléchargé et
+  versionné à la main — montré tel quel par les deux démos du support.
+- § Localiser un élément : ordre de préférence explicite des locators —
+  `By.CSS_SELECTOR` par défaut (lisible, robuste, rapide), `By.ID` si un
+  identifiant unique existe, `By.XPATH` en dernier recours seulement — repris
+  du support (« souvent le meilleur choix » / « seulement si nécessaire »),
+  absent du CLAUDE.md racine qui ne mentionne pas les locators.
+
+**Divergence assumée, non corrigée dans la règle (le code du support n'est
+pas repris tel quel)** : la Démo 1 du support (books.toscrape.com) place
+`driver.quit()` en fin de script linéaire, hors `try/finally`, alors que la
+Démo 2 (quotes.toscrape.com/js) l'enveloppe correctement. Le support
+n'applique donc pas sa propre bonne pratique de façon cohérente d'un exemple
+à l'autre — la règle retient uniquement le patron `try/finally`, cohérent
+avec le CLAUDE.md racine, pas l'exemple incohérent de la Démo 1.
+
+Non retenu, hors périmètre : le tableau Selenium vs BeautifulSoup et les
+schémas d'attente (matériel pédagogique, déjà résumé par la règle en une
+phrase) ; les trois exercices progressifs (interactions site statique/
+dynamique, collecte multi-pages + export CSV) — scaffolding d'atelier ; le
+« bilan » (avantages/limites/QA/CI-CD) — contexte, rien d'actionnable
+au-delà de ce qui précède.
+
+Seize règles au total à partir de ce cours.
+
 ### Décisions techniques prises pendant la revue
 
 - **loguru est obligatoire** (demande explicite, 2026-09-02). Ce n'est plus « un
@@ -542,6 +580,12 @@ Quinze règles au total à partir de ce cours.
   l'utilisateur, journalisation loguru, secrets `.streamlit/secrets.toml`,
   déploiement conteneurisé plutôt que Streamlit Cloud. `README.md` et
   `modeles/modele-CLAUDE.md` mis à jour (quinze règles).
+- `rules/selenium.md` (cours 23, **nouveau fichier**, seizième règle) —
+  BeautifulSoup vs Selenium, `webdriver_manager`/`Service`, `driver.quit()`
+  en `finally`, ordre de préférence des locators (`CSS_SELECTOR` > `ID` >
+  `XPATH`), `WebDriverWait`/`expected_conditions` jamais `time.sleep()`,
+  éthique et cadre légal du scraping. `README.md` et
+  `modeles/modele-CLAUDE.md` mis à jour (seize règles).
 
 ### Vérifié
 
@@ -599,17 +643,17 @@ Quinze règles au total à partir de ce cours.
   (catalogue de widgets, deux mini-projets) n'apportant lui-même qu'une
   confirmation de structure (`pages/` à préfixe numérique) et une
   divergence sur le déploiement (Streamlit Cloud contre le défaut
-  `docker-compose`/registre interne déjà écrit). Cours 23 (Selenium) suit
-  vraisemblablement le même patron : `grep -rln -i selenium rules/
-  README.md modeles/` ne retourne rien non plus, seul le CLAUDE.md racine
-  en parle (§ Applications — Selenium, une phrase : BeautifulSoup pour du
-  HTML statique, Selenium dès qu'il y a du JS, jamais `time.sleep()` mais
-  `WebDriverWait` + `expected_conditions`, `driver.quit()` en `finally`,
-  respect RGPD/robots.txt/CGU) — probable seizième règle, `rules/
-  selenium.md` ou rattachement à `rules/donnees.md`/`rules/http.md` selon ce
-  que montre le support (scraping proche de la récupération de données,
-  mais aussi requêtes sortantes pilotées par navigateur) — à trancher à la
-  lecture plutôt que de décider par avance.
+  `docker-compose`/registre interne déjà écrit). Cours 23 (Selenium) traité :
+  même figure confirmée — nouveau fichier `rules/selenium.md` (seizième
+  règle), pas rattaché à `donnees.md`/`http.md` (le support ne le suggérait
+  pas, et le pilotage de navigateur n'est ni une transformation de données ni
+  un appel HTTP au sens des deux fichiers existants). Cours 24 (Redmail)
+  suit vraisemblablement le même patron une troisième fois : `grep -rln -i
+  "redmail\|smtp\|email" rules/ README.md modeles/` ne retourne rien, seul
+  le CLAUDE.md racine en parle (§ Secrets, une clause : mot de passe
+  d'application dédié, jamais le mot de passe réel du compte, chargé depuis
+  l'environnement) — probable dix-septième règle, `rules/redmail.md` ou
+  `rules/email.md` selon ce que montre le support, à trancher à la lecture.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
