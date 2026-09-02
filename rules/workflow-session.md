@@ -17,9 +17,11 @@
   et la session redevient coûteuse.
 - Texte uniquement dans le contexte. Un PDF ou une capture d'écran passent par
   une extraction texte préalable.
-- Surveiller `/usage`. Au-delà de 120 k jetons : finir le point en cours, puis
-  `/clear`. Si la tâche n'est pas terminée, la découper et committer ce qui est
-  fait plutôt que de continuer dans un contexte saturé.
+- Surveiller `/context`, qui visualise la fenêtre courante — `/usage` et son
+  alias `/cost` mesurent le forfait, pas le contexte. Au-delà de 120 k jetons :
+  finir le point en cours, puis `/clear`. Si la tâche n'est pas terminée, la
+  découper et committer ce qui est fait plutôt que de continuer dans un contexte
+  saturé.
 - Préférer `/clear` avec un `SESSION.md` à jour plutôt que la compaction
   automatique : le résumé écrit est relu tel quel à la session suivante.
 
@@ -32,8 +34,8 @@
 3. Résumé écrit dans `SESSION.md` au format ci-dessous.
 4. Relecture du résumé avec l'utilisateur avant de continuer.
 5. `ARCHITECTURE.md` mis à jour si l'architecture a bougé.
-6. Commit sur la branche `feature/*`, fusion dans `develop`, suppression de la
-   branche.
+6. Commit sur la branche `feature/*`, fusion dans `develop` avec
+   `git merge --no-ff`, suppression de la branche.
 7. `/clear`.
 
 Ne jamais faire `/clear` avant que les vérifications passent et que `SESSION.md`

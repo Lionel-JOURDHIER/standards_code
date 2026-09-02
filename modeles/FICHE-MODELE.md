@@ -37,6 +37,21 @@ d'être en production.
 
 Métrique de décision choisie avant l'entraînement : <laquelle et pourquoi>.
 
+## Portail qualité
+
+Seuils qui **bloquent** la promotion, repris tels quels dans la configuration du
+pipeline — ce tableau et la configuration disent la même chose ou l'un des deux
+est faux.
+
+| Contrôle | Seuil de blocage | Mesuré sur |
+|---|---|---|
+| Dérive des entrées vs fenêtre de référence | | |
+| Dérive des sorties | | |
+| Qualité des données (nuls, cardinalité) | | |
+
+Un dépassement arrête le pipeline avant la promotion. Le rapport est archivé en
+artefact du run, JSON et HTML, pas consulté à l'écran puis oublié.
+
 ## Coût des erreurs
 
 - Faux positif : conséquence concrète, coût estimé.

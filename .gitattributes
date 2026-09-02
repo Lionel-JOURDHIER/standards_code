@@ -1,0 +1,4 @@
+# Un seul CR dans le hook suffit à le rendre inexécutable (« /usr/bin/env:
+# 'bash\r': No such file or directory »). LF est imposé y compris après un
+# clone sous Windows avec core.autocrlf=true.
+* text=auto eol=lf

@@ -12,7 +12,11 @@
 #
 # Contournement ponctuel et assumé : git commit --no-verify
 
-set -u
+# -f coupe le développement de chemins : sans lui, `for motif in $MOTIFS_INTERDITS`
+# remplace le motif par les fichiers du dossier courant qui lui correspondent, et
+# un fichier interdit rangé ailleurs passe alors sans un mot. Les motifs de `case`
+# ne sont pas concernés, eux continuent de fonctionner.
+set -uf
 
 RACINE=$(git rev-parse --show-toplevel) || exit 0
 CONF="$RACINE/.githooks/standards.conf"
@@ -28,8 +32,11 @@ BIOME_DOSSIER=""
 CHEMINS_EXCLUS=""
 MOTIFS_INTERDITS=""
 
+# Les CR d'un fichier venu de Windows sont retirés avant lecture : sinon
+# MOTIFS_INTERDITS="*.xlsx"\r ne correspond plus à rien et le garde-fou se
+# désactive en silence.
 # shellcheck source=/dev/null
-[ -f "$CONF" ] && . "$CONF"
+[ -f "$CONF" ] && . <(tr -d '\r' < "$CONF")
 
 erreurs=0
 signaler() {

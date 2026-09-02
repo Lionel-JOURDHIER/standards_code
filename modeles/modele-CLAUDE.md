@@ -62,17 +62,22 @@ réelles — sur demande explicite uniquement.
 
 ---
 
-<!-- Règles par langage : ne PAS les mettre ici. Créer .claude/rules/<langage>.md
-     avec un frontmatter `paths` pour qu'elles ne se chargent que sur les
-     fichiers concernés :
+<!-- Règles par langage : ne PAS les mettre ici, et ne pas les écrire à la main.
+     Le sous-module en contient dix-sept, déjà rédigées et versionnées, dans
+     .claude/standards/rules/ : python, tests-python, javascript, nodejs, vba,
+     ml, donnees, bdd, deploiement, securite-api, agents-ia, streamlit,
+     selenium, cicd, http, documentation, workflow-session.
 
-     ---
-     paths:
-       - "**/*.py"
-     ---
-     # Python
-     - Docstrings Google en français sur tout élément public.
-     - `uv run ruff check .` et `uv run ruff format .` avant commit.
+     On copie celles qui servent, une par une, comme décrit dans le README du
+     sous-module :
 
-     Idem rules/javascript.md (`**/*.js`) et rules/vba.md (`**/*.bas`).
-     Le projet VBA ne charge alors jamais les règles ruff, et inversement. -->
+       cp .claude/standards/rules/python.md .claude/rules/python.md
+
+     Chacune porte un frontmatter `paths` et ne se charge que sur les fichiers
+     correspondants : un projet VBA ne charge jamais les règles ruff, et
+     inversement. Ne recopier que les règles des langages et des composants
+     présents — une règle chargée pour rien coûte du contexte à chaque session.
+
+     Ce qui ne vaut que pour CE dépôt va dans le présent fichier, pas dans
+     .claude/rules/, dont le contenu est celui du dépôt de standards et se fait
+     écraser à chaque mise à jour. -->

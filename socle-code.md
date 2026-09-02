@@ -10,14 +10,27 @@ un projet n'a rien à faire ici.
 
 ## Priorités en cas de conflit
 
-1. Le code existant fait foi. Si ce socle contredit la pratique visible dans le
-   fichier modifié, suivre le fichier et signaler l'écart plutôt que de le
-   corriger au passage.
+1. Ces conventions — ce socle et les `rules/*.md` — s'appliquent à tout code
+   **écrit ou modifié**, y compris dans un fichier qui ne les respecte pas
+   ailleurs. Mais le reste du fichier n'est pas repris pour autant : on signale
+   l'écart, on ne réécrit pas l'existant au détour d'une modification. Deux
+   choses ne se laissent jamais en l'état par simple imitation du fichier : un
+   secret ou une donnée réelle exposés, et un risque de perte de données. Cela
+   se corrige, ou se signale immédiatement si la correction sort du cadre de la
+   demande.
 2. Ne jamais introduire un outil ou une dépendance qui n'est pas déjà dans le
-   projet (logger, linter, framework de test, formateur) sans que ce soit
-   l'objet explicite de la demande.
+   projet — logger, linter, framework de test, formateur, bibliothèque tierce —
+   **sans le demander d'abord**, y compris quand l'ajout paraît évident ou
+   minuscule. Les outils nommés dans les `rules/*.md` (Alembic, httpx, slowapi,
+   pwdlib…) sont les défauts d'un projet ou d'un composant **neuf** : dans un
+   dépôt existant qui ne les a pas, la règle ne s'applique pas d'elle-même. On
+   signale l'écart, on propose l'ajout, on attend l'accord.
 3. Une modification fait une chose. Pas de reformatage, de renommage ni de
-   correction opportuniste au détour d'un autre correctif.
+   correction opportuniste au détour d'un autre correctif. La frontière avec la
+   priorité 1 : ce que j'écris ou réécris suit les conventions, ce qui existait
+   autour et que je n'ai pas eu à toucher reste tel quel. Une docstring devenue
+   fausse parce que j'ai changé le comportement appartient au premier lot, pas
+   au second.
 
 ## Docstrings et en-têtes
 
@@ -41,6 +54,56 @@ un projet n'a rien à faire ici.
   correctif ou une conversation : cette information vit dans le message de
   commit.
 - Pas de code mort laissé en commentaire : git le retrouve.
+
+## Méthode : le plus simple qui règle le cas demandé
+
+Dans cet ordre, à chaque fois :
+
+1. **Formuler la règle métier** en une phrase, avant d'écrire une ligne, puis
+   les entrées et la sortie de chaque fonction prévue — ce qu'elle reçoit, ce
+   qu'elle rend, ce qu'elle fait en cas d'échec. Un code qu'on n'arrive pas à
+   décrire en une phrase résout un problème mal posé, et une signature qu'on
+   n'arrive pas à écrire avant le corps annonce une fonction qui en fait deux.
+2. **Écrire la version la plus directe** qui traite le cas demandé, et rien
+   d'autre.
+3. **Ne factoriser qu'ensuite**, et seulement ce qui est prouvé identique.
+4. **Supprimer ce que la modification vient de rendre inatteignable.** Du code
+   retiré est du code gagné : il ne se maintient pas, ne se teste pas et ne se
+   lit pas de travers. Le code mort qui préexistait n'entre pas dans le lot,
+   c'est une tâche à part — sinon on retire au détour d'un correctif ce que la
+   priorité 3 interdit de toucher. Et avant toute suppression, vérifier qu'il
+   n'y a pas d'appel par nom — VBA, réflexion, point d'entrée déclaré en
+   configuration — qu'aucune recherche de références ne fait apparaître.
+
+### KISS
+
+- Le besoin exprimé, pas le besoin imaginé. Pas de paramètre de configuration
+  pour un cas qui ne s'est jamais présenté, pas de couche d'abstraction avec une
+  seule implémentation, pas de moteur générique là où trois conditions
+  suffisent. Le jour où le deuxième cas arrive, on le voit vraiment — et il ne
+  ressemble presque jamais à celui qu'on avait anticipé.
+- Une fonction dont on ne peut pas prédire le comportement à la lecture de sa
+  signature est trop maligne, même si elle est courte.
+- Préférer ce que la bibliothèque standard fait déjà à une réécriture, et une
+  structure de données évidente à une astuce qui économise trois lignes.
+
+### DRY
+
+Ce qui ne doit pas être dupliqué, c'est une **règle**, pas des caractères.
+
+- Une même valeur, un même seuil, un même format de fichier, une même règle de
+  gestion : un seul endroit, toujours. Deux copies divergent, et c'est la
+  mauvaise qui reste en production.
+- Deux blocs qui se ressemblent aujourd'hui mais qui évolueront pour des raisons
+  différentes **restent séparés**. Les fusionner crée un couplage qu'on paiera
+  en ajoutant un paramètre booléen pour retrouver les deux comportements — et un
+  booléen qui pilote le corps d'une fonction est le signe qu'il en fallait deux.
+- Attendre la troisième occurrence avant d'extraire. À la deuxième, on ne sait
+  pas encore ce qui est commun et ce qui est accidentel.
+
+Les deux principes se contredisent régulièrement. Quand c'est le cas, KISS
+l'emporte : une duplication se voit et se corrige, une mauvaise abstraction se
+propage.
 
 ## Découpage et nommage
 
@@ -76,26 +139,59 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
   sa machine. Pas de branche `release/*` tant que le versionnement n'est pas
   formalisé.
 - **`develop`** : branche d'intégration, branche par défaut de tout nouveau
-  travail.
+  travail. La mettre à jour (`git pull --ff-only`) **avant** d'en tirer une
+  branche : une `feature/*` partie d'un `develop` en retard fusionne en
+  conflits qui n'ont rien à voir avec la tâche.
 - **`feature/<nom-kebab-case>`** : une branche par tâche, créée depuis
-  `develop`, fusionnée dans `develop` par `git merge` (pas de rebase, pas de
-  squash — historique simple), puis supprimée.
+  `develop`, fusionnée dans `develop` par `git merge --no-ff`, puis supprimée.
+  Pas de rebase, pas de squash : les commits restent tels qu'ils ont été écrits.
+  `--no-ff` force un commit de fusion même quand l'avance rapide est possible,
+  ce qui garde le regroupement de la tâche une fois la branche supprimée. Sans
+  lui, l'option `-m` est ignorée en silence et le message de fusion est perdu.
 - **`hotfix/<nom-kebab-case>`** : correction urgente créée depuis `main`,
   fusionnée dans `main` **et** dans `develop`.
 - Ne jamais committer directement sur `main`.
-- Message de commit au format `type : résumé`, `type` valant `feat` ou `fix`.
-  Un projet peut étendre le format, pas le remplacer.
+- Une branche vit le temps d'une tâche. Au-delà de quelques jours, elle diverge
+  plus vite qu'elle n'avance : découper la tâche et fusionner ce qui est fini.
+- Une seule personne décide des fusions vers `main`. Côté assistant, cela se
+  traduit par l'interdiction ci-dessous : la fusion dans `main` se demande, elle
+  ne se prend pas.
+- **Un commit = une unité cohérente**, c'est-à-dire une fonctionnalité, une
+  correction ou une réécriture — pas une journée de travail, pas un fichier.
+  C'est ce qui rend un `git revert` possible et un historique lisible.
+- Message de commit au format `type : résumé`, `type` pris dans cette liste :
+
+  | Type | Pour |
+  |---|---|
+  | `feat` | nouvelle fonctionnalité ou comportement visible |
+  | `fix` | correction d'un défaut |
+  | `docs` | documentation seule — README, docstrings, conventions |
+  | `refactor` | réécriture sans changement de comportement |
+  | `test` | ajout ou correction de tests seuls |
+  | `chore` | dépendances, configuration, outillage, `.gitignore` |
+  | `ci` | workflows d'intégration continue |
+
+  Un commit qui relèverait de deux types en fait probablement deux. Un projet
+  peut ajouter un type, pas remplacer la liste.
 
 ## Commits
 
 - Toute modification validée par l'utilisateur (code, docstrings, documentation)
   est committée avant de passer à la suite, sur une branche `feature/*`
-  fusionnée dans `develop` — sans redemander confirmation une fois le changement
-  vérifié, et sans laisser des changements non commités s'accumuler d'une tâche
-  à l'autre.
+  fusionnée dans `develop`. L'ordre est celui de `rules/workflow-session.md` :
+  vérifications, résumé dans `SESSION.md`, relecture avec l'utilisateur, puis
+  commit. Une fois le résumé validé, committer sans redemander confirmation, et
+  sans laisser des changements non commités s'accumuler d'une tâche à l'autre.
 - Ne jamais pousser (`git push`), forcer un push, fusionner dans `main` ni
   réécrire l'historique sans demande explicite. Le commit automatique ne couvre
   que les commits locaux et la fusion locale dans `develop`.
+- L'auteur du commit doit être identifiable : `git config user.name` et
+  `user.email` renseignés sur le poste, avec l'adresse professionnelle. Un
+  historique signé « root@machine » ne dit plus qui a écrit quoi.
+- Un commit écrit par l'assistant porte la ligne de fin
+  `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`, séparée du corps par
+  une ligne vide. Uniformément : un historique où seuls certains la portent ne
+  distingue plus rien.
 - Avant de committer, lancer les vérifications déclarées dans le `CLAUDE.md` du
   dépôt. Ce qui n'est pas couvert par un outil automatique et a été vérifié à la
   main est écrit dans le message de commit.
@@ -109,3 +205,29 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
 - Artefacts régénérables : rapports de couverture, dossiers de build,
   dépendances installées.
 - Avant tout `git add` large (`git add .`), vérifier `git status`.
+
+### Le `.gitignore`
+
+Écrit à la création du dépôt, pas après le premier incident : un fichier déjà
+suivi continue de l'être quand on l'ajoute au `.gitignore`, et un secret déjà
+commité reste dans l'historique même après suppression — il est à considérer
+comme divulgué, donc à révoquer.
+
+- Versionné, un par dépôt, organisé par catégories : environnement (`.venv/`),
+  artefacts régénérables (`__pycache__/`, `dist/`, `build/`, couverture),
+  secrets (`.env`, `secrets.toml`, `.streamlit/secrets.toml` — le
+  `.env.example`, lui, est versionné), données et modèles volumineux, journaux.
+- **Les fichiers de verrou ne s'ignorent jamais** : `uv.lock`,
+  `package-lock.json` sont versionnés. Beaucoup de `.gitignore` génériques les
+  excluent, et une CI qui installe sans verrou ne teste plus la même chose que
+  le poste de développement.
+- Ce qui tient au poste ou à l'éditeur (`.idea/`, `.DS_Store`, fichiers de swap)
+  va dans l'ignore global de l'utilisateur, pas dans le `.gitignore` du dépôt,
+  qui ne décrit que le projet.
+- Un fichier déjà suivi continue de l'être : `git rm --cached <fichier>` pour
+  l'en sortir, dans un commit à part.
+- Ignorer un **répertoire** empêche de ré-inclure son contenu par `!` : git
+  n'entre pas dans un répertoire exclu. Pour garder un fichier d'un dossier
+  ignoré, exclure les fichiers (`dossier/*`) plutôt que le dossier.
+- Doute sur un fichier absent de `git status` : `git check-ignore -v <fichier>`
+  dit quelle ligne l'ignore, et `git status --ignored` montre ce qui est masqué.
