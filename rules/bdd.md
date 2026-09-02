@@ -129,6 +129,63 @@ d'écrire une classe :
   (`server_default=func.now()`), pas une valeur calculée en Python : c'est
   l'heure de la base qui fait foi.
 
+## Recherche vectorielle — pgvector
+
+Extension PostgreSQL pour la recherche par similarité sémantique (RAG,
+recommandation) : le type `vector` reste dans PostgreSQL, interrogeable par les
+mêmes `WHERE`/`JOIN`/`GROUP BY` que le reste du schéma. Ne s'active qu'à la
+demande — ce n'est pas une entrée du tableau « Choix par défaut » de
+`rules/python.md`.
+
+- Extension activée une fois par base, **dans une migration Alembic**
+  (`op.execute("CREATE EXTENSION IF NOT EXISTS vector")`) — pas à la main sur
+  le serveur, sinon l'environnement suivant (test, autre poste, CI) ne l'a pas.
+- Colonne déclarée avec `pgvector.sqlalchemy.Vector(N)` et `mapped_column`,
+  cohérent avec le style 2.0 de ce fichier. Un accès `psycopg2` brut avec
+  `register_vector(conn)` reste possible pour un script d'exploration ponctuel,
+  pas pour le code applicatif.
+- `N` est la dimension du modèle d'embedding (384/768/1536 selon le modèle) et
+  ne varie pas dans la colonne : changer de modèle d'embedding recalcule toutes
+  les lignes, ce qui se traite comme une migration de données, pas un
+  ajustement de type.
+
+### Opérateur de distance
+
+Le choix dépend de la nature des vecteurs, pas d'une préférence :
+
+| Opérateur | Distance | Cas d'usage |
+|---|---|---|
+| `<=>` | Cosinus | Embeddings texte / NLP — presque toujours le bon choix par défaut |
+| `<->` | L2 (euclidienne) | Images, vision |
+| `<#>` | Produit scalaire (négatif) | Retrieval dense, bi-encodeurs |
+| `<+>` | L1 (Manhattan) | Features éparses, recommandation |
+
+L'opérateur utilisé en requête doit correspondre à l'`ops` de l'index
+(`vector_cosine_ops` pour `<=>`, `vector_l2_ops` pour `<->`, etc.) : un index
+construit avec le mauvais `ops` n'est simplement pas utilisé, sans erreur.
+
+### Index ANN
+
+Sans index, une recherche compare tous les vecteurs un par un (balayage
+séquentiel). Au-delà d'environ 10 000 lignes, un index ANN (Approximate
+Nearest Neighbors) est obligatoire.
+
+| | HNSW | IVFFlat |
+|---|---|---|
+| Par défaut | oui, sauf contrainte mémoire | non |
+| Mémoire | plus gourmand | plus léger |
+| Paramètres | `m`, `ef_construction`, `ef_search` | `lists`, `probes` |
+
+```sql
+CREATE INDEX ON items USING hnsw (embedding vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);
+```
+
+Vérifier que l'index est réellement utilisé avec `EXPLAIN (ANALYZE, BUFFERS)`,
+pas en le supposant : un `ops` erroné ou un filtre `WHERE` additionnel peut
+faire retomber sur un balayage complet. Ce type n'est testable que sur une
+vraie base PostgreSQL — voir § Tests.
+
 ## Requêtes
 
 - Toujours passer par les paramètres liés. `text("… WHERE nom = :nom")` avec
@@ -168,8 +225,8 @@ d'écrire une classe :
 
 - SQLite en mémoire, base recréée par test, transaction annulée en fin de test.
 - Ce qui touche à un type spécifique à PostgreSQL (`JSONB`, `ARRAY`, `tsvector`,
-  `vector`) ne peut pas être testé sur SQLite : ces tests-là visent une vraie
-  base PostgreSQL, sinon ils ne prouvent rien.
+  `vector` — § Recherche vectorielle) ne peut pas être testé sur SQLite : ces
+  tests-là visent une vraie base PostgreSQL, sinon ils ne prouvent rien.
 
 ## Connexion
 
