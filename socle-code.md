@@ -59,8 +59,11 @@ un projet n'a rien à faire ici.
 
 Dans cet ordre, à chaque fois :
 
-1. **Formuler la règle métier** en une phrase, avant d'écrire une ligne. Un code
-   qu'on n'arrive pas à décrire en une phrase résout un problème mal posé.
+1. **Formuler la règle métier** en une phrase, avant d'écrire une ligne, puis
+   les entrées et la sortie de chaque fonction prévue — ce qu'elle reçoit, ce
+   qu'elle rend, ce qu'elle fait en cas d'échec. Un code qu'on n'arrive pas à
+   décrire en une phrase résout un problème mal posé, et une signature qu'on
+   n'arrive pas à écrire avant le corps annonce une fonction qui en fait deux.
 2. **Écrire la version la plus directe** qui traite le cas demandé, et rien
    d'autre.
 3. **Ne factoriser qu'ensuite**, et seulement ce qui est prouvé identique.

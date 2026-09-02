@@ -103,6 +103,22 @@ df["revenu"].fillna(mediane, inplace=True)      # sans effet, silencieusement
 - Aucune donnée personnelle dans un graphique ou une sortie de notebook
   conservée : les sorties de cellules sont du contenu versionné comme le reste.
 
+## Un DataFrame n'est pas un stockage
+
+Il vit en mémoire : rien n'y est persistant, unique, ni transactionnel, et deux
+écritures concurrentes se perdent. Il sert à **transformer**, pas à conserver.
+
+- Des enregistrements qu'on crée, modifie et supprime relèvent d'une base —
+  SQLite en local, PostgreSQL en serveur, via SQLAlchemy (`rules/bdd.md`). Un
+  CRUD sur DataFrame réécrit un fichier entier à chaque modification et perd
+  tout à l'arrêt du programme.
+- Écrire un DataFrame vers un fichier intermédiaire : **Parquet**, pas CSV. Le
+  CSV perd les types, les valeurs nulles et l'encodage, et se relit avec des
+  colonnes différentes de celles qu'on a écrites.
+- Un fichier de données qu'on relit à chaque exécution n'est pas une base non
+  plus : pas de contrainte, pas de verrou, et un plantage en cours d'écriture
+  laisse un fichier tronqué.
+
 ## Ce qui doit finir en `.py`
 
 Un notebook explore. Dès qu'une transformation est retenue, elle devient une

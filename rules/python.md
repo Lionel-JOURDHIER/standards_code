@@ -185,6 +185,23 @@ def charger_parc(chemin: Path, marche: str) -> dict[str, Logement]:
 - Le basculement entre contextes de déploiement se fait par une variable, pas
   par du code conditionnel dispersé.
 
+## Mots de passe et saisie sensible
+
+Vaut partout, y compris dans un script ou un outil en ligne de commande —
+`rules/securite-api.md` ne se charge que sur le code d'API, mais la règle ne
+s'y limite pas.
+
+- Un mot de passe ne se stocke **jamais** en clair, et jamais sous un hash
+  rapide (`hashlib.sha256`, `md5`), même salé à la main. **bcrypt via
+  `pwdlib`**, dont l'algorithme est lent par conception et sale
+  automatiquement. Détail dans `rules/securite-api.md`.
+- Saisie interactive : `getpass.getpass()`, jamais `input()`, qui affiche le
+  mot de passe à l'écran et le laisse dans le terminal derrière soi.
+- Un hash ne s'affiche pas plus qu'un mot de passe : il se casse hors ligne. Ni
+  à l'écran, ni dans un tableau exporté, ni dans une trace d'erreur.
+- Comparer par la fonction de vérification de la bibliothèque, jamais par `==`
+  sur les empreintes recalculées à la main.
+
 ## Choix par défaut
 
 Valables sauf décision contraire écrite dans le `CLAUDE.md` du dépôt, avec sa
