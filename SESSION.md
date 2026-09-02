@@ -32,8 +32,8 @@ combler les manques « au lieu le plus logique ».
 | 17 | Evidently | fait |
 | 18 | Sécurité en Python | fait |
 | 19 | hash / cryptage | fait |
-| **20** | **Sécuriser une API FastAPI** | **à faire — reprendre ici** |
-| 21 | Vault 1 & 2 | à faire |
+| 20 | Sécuriser une API FastAPI | fait |
+| **21** | **Vault 1 & 2** | **à faire — reprendre ici** |
 | 22 | Streamlit | à faire |
 | 23 | Selenium | à faire |
 | 24 | Redmail | à faire |
@@ -301,6 +301,49 @@ prescrit (pwdlib/bcrypt).
 Pas de nouveau fichier de règle, aucun fichier existant modifié — quatorze
 règles inchangé.
 
+Cours 20 (Sécuriser une API FastAPI, 58 diapositives, `Tuto/securiser-api-fastapi.pptx`)
+traité. Confirmation attendue : `rules/securite-api.md` est directement sourcé
+de ce kit (avant le début de cette revue) — l'essentiel (bcrypt/pwdlib, JWT
+signé non chiffré, épinglage d'algorithme, `audience=`/`issuer=`, access 15
+min/refresh 7 j, rotation, révocation par `jti`, 401/403, dépendances
+chaînées, fail-closed, rate limiting, CORS, anti-énumération, HTTPS,
+`httpOnly` vs `localStorage`, durcissement d'un endpoint de modèle, injection
+de prompt, OWASP API Top 10) était déjà couvert mot pour mot. Cinq manques
+concrets trouvés, tous des gestes mécaniques ou des pièges nommés
+explicitement par le support et absents du fichier (commit `feat : claims
+JWT complets, gotchas python-multipart/pyjwt/slowapi, Client Credentials,
+WWW-Authenticate dans securite-api.md`, fusionné dans `develop`) :
+- § JWT : la diapositive « Valider un JWT, vraiment » du support exige
+  `aud`/`iss`/`nbf` en plus de `exp`/`iat`/`sub` dans `options={"require":
+  [...]}` — le fichier n'en demandait que trois. Corrigé : la règle
+  n'expliquait le couple `audience=`/`issuer=` que côté vérification, jamais
+  côté claims obligatoires, ce qui laissait passer un token qui omet
+  purement et simplement `aud`/`iss` sans être rejeté pour cette raison. Plus
+  un bullet sur le piège `pip install jwt` (mauvais paquet) contre `pyjwt`
+  (import `jwt`).
+- § Sessions : dépendance `python-multipart` pour `OAuth2PasswordRequestForm`
+  (sinon 422 sur `/token` sans message clair), et le grant **Client
+  Credentials** pour un appel service-à-service sans utilisateur humain — le
+  fichier ne distinguait que Password Grant et Authorization Code+PKCE, tous
+  deux pensés pour un utilisateur, jamais le cas M2M.
+- § Autorisation : en-tête `WWW-Authenticate: Bearer` sur le 401 levé par
+  `get_current_user`, exigé par la spécification HTTP, absent du fichier.
+- § Durcissement : `slowapi` exige `request: Request` en paramètre de la
+  route décorée par `@limiter.limit(...)`, sans quoi il échoue à l'exécution
+  et pas au démarrage — piège concret montré par le code du support, absent
+  du fichier.
+
+**Divergence assumée, réaffirmée sans changement** : le support autorise le
+Resource Owner Password Grant pour « votre propre front-end » (client de
+confiance), alors que `rules/securite-api.md` (ajout du cours 18) le réserve
+à un script interne au dépôt, jamais à un client tiers **ni une application
+publique** — donc plus strict que le support y compris pour son propre cas
+d'usage recommandé. Resserrement délibéré maintenu : un front-end reste un
+client public au sens OAuth2 (code exécuté hors du contrôle du serveur), la
+règle du dépôt suit la lecture la plus prudente plutôt que celle du support.
+
+Pas de nouveau fichier de règle — quatorze règles inchangé.
+
 ### Décisions techniques prises pendant la revue
 
 - **loguru est obligatoire** (demande explicite, 2026-09-02). Ce n'est plus « un
@@ -378,6 +421,11 @@ règles inchangé.
   bullet en tête sur Authorization Code + PKCE plutôt que Resource Owner
   Password Grant, avec le piège du tutoriel officiel FastAPI
   (`OAuth2PasswordRequestForm`).
+- `rules/securite-api.md` (cours 20) — § JWT : claims obligatoires étendus
+  (`aud`/`iss`/`nbf`), piège `pyjwt` vs `jwt` ; § Sessions : dépendance
+  `python-multipart`, grant Client Credentials pour le M2M ; § Autorisation :
+  en-tête `WWW-Authenticate: Bearer` ; § Durcissement : `request: Request`
+  requis par `slowapi`.
 
 ### Vérifié
 
@@ -419,11 +467,18 @@ règles inchangé.
   et `rules/securite-api.md` § Chiffrement des données couvraient déjà tout
   le contenu du support, anti-patron `==`/`hashlib.sha256` inclus — premier
   cours de la revue sans aucun fichier de règle touché. Cours 20 (Sécuriser
-  une API FastAPI) ira vraisemblablement, lui aussi, en confirmation plutôt
-  qu'en ajout : `rules/securite-api.md` est déjà sourcé directement de ce
-  même kit de formation (créé avant le début de cette revue systématique,
-  commit `77efade`) — vérifier à la lecture s'il reste un atelier ou un
-  détail du support non repris plutôt que de dupliquer.
+  une API FastAPI) confirmé très majoritairement (58 diapositives sourcées
+  du même kit que `rules/securite-api.md`), avec cinq gestes mécaniques/
+  pièges concrets ajoutés (claims JWT complets, `python-multipart`, Client
+  Credentials, `WWW-Authenticate`, `slowapi`/`Request`) — pas de nouveau
+  fichier. Cours 21 (Vault 1 & 2) sera la première extension réelle du
+  périmètre : `grep -rn -i vault rules/` ne retourne rien, seul le CLAUDE.md
+  racine du dossier de formation en parle (§ Secrets, HashiCorp Vault :
+  policies deny-by-default, AppRole pour le M2M, KV v2 avec `cas_required`,
+  jamais de token root en usage applicatif) — probablement une nouvelle
+  section dans `rules/securite-api.md` (voisine de § Configuration :
+  fail-closed, qui parle déjà de secrets et de refus de démarrage) plutôt
+  qu'un nouveau fichier, à confirmer à la lecture du support.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
