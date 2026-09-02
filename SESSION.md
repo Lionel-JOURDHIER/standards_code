@@ -25,8 +25,8 @@ combler les manques « au lieu le plus logique ».
 | 10 | SQLAlchemy | fait |
 | 11 | pgvector | fait |
 | 12 | PySpark | fait |
-| **13** | **Machine Learning** | **à faire — reprendre ici** |
-| 14 | Keras / PyTorch / NLP / audio / Hugging Face | à faire |
+| 13 | Machine Learning | fait |
+| **14** | **Keras / PyTorch / NLP / audio / Hugging Face** | **à faire — reprendre ici** |
 | 15 | MLflow | à faire |
 | 16 | MLOps 0 → 4 | à faire |
 | 17 | Evidently | à faire |
@@ -49,6 +49,29 @@ dans `rules/donnees.md`, juste avant « Ce qui doit finir en `.py` » (commit
 `feat : passage à l'échelle PySpark dans donnees.md`, fusionné dans
 `develop`). Pas de nouveau fichier de règle — treize règles inchangé, mêmes
 chemins de portée (`etl/`, `pipelines/`, `data/`) déjà suffisants.
+
+Cours 13 (Machine Learning) traité : `rules/ml.md` couvrait déjà l'essentiel
+du cours (découpage train/val/test, fuite de données, choix de métrique,
+MLflow, portail qualité, promotion) à un niveau plus exigeant que le support —
+le cours est resté surtout théorique (définitions précision/rappel/F1,
+formules MSE/MAE, pipeline ML générique). Trois manques concrets comblés dans
+`rules/ml.md` (commit `feat : pipeline sklearn, recherche d'hyperparamètres et
+non supervisé dans ml.md`, fusionné dans `develop`) :
+- § Fuite de données : nomme l'outil concret (`sklearn.pipeline.Pipeline` /
+  `ColumnTransformer`) qui applique la règle déjà écrite, plus une règle neuve
+  sur le rééquilibrage de classes (SMOTE / sur- et sous-échantillonnage) —
+  absent du fichier, sur l'entraînement seul et après le découpage.
+- Nouvelle section « Recherche d'hyperparamètres » (GridSearchCV) : plis de
+  validation croisée bornés à l'entraînement, jamais le test gelé ; validation
+  croisée imbriquée si la recherche est répétée.
+- § Métriques : deux bullets, choix précision/rappel selon le coût
+  faux positif/négatif (renvoi à § Humain dans la boucle), MAE vs MSE en
+  régression.
+- Nouvelle section « Apprentissage non supervisé » (clustering, réduction de
+  dimension) : signale que Baseline/Registry/Portail qualité, écrits pour du
+  supervisé avec un champion à battre, ne s'appliquent pas tels quels ; le
+  nombre de clusters (coude/silhouette) reste indicatif.
+Pas de nouveau fichier de règle — treize règles inchangé.
 
 ### Décisions techniques prises pendant la revue
 
@@ -148,3 +171,12 @@ chemins de portée (`etl/`, `pipelines/`, `data/`) déjà suffisants.
   écrite va au-delà du contenu du cours sur le shuffle/partitionnement et les
   UDF, à partir de connaissances générales PySpark plutôt que d'un point du
   support — à signaler si Lionel veut border strictement aux cours.
+- Divergence assumée, cours 13 : le support présente la réduction de dimension
+  (PCA) comme un moyen d'« anonymat des données (RGPD) ». Affirmation non
+  reprise — réduire des dimensions n'anonymise pas au sens RGPD (ré-
+  identification possible, pas de garantie d'irréversibilité) — et aucune
+  règle PCA n'a été ajoutée : ni ml.md ni donnees.md ne couvrent la réduction
+  de dimension pour l'instant, seul le clustering/non-supervisé l'a été.
+- Cours 14 (Keras/PyTorch/NLP/audio/Hugging Face) va aussi toucher `rules/ml.md`
+  (deep learning, au-delà du scikit-learn implicite des sections existantes) —
+  vérifier qu'il ne contredit pas les ajouts du cours 13 avant d'écrire.
