@@ -3,8 +3,9 @@ paths:
   - "**/chains/**/*.py"
   - "**/agents/**/*.py"
   - "**/graphs/**/*.py"
-  - "**/tools/**/*.py"
   - "**/rag/**/*.py"
+  - "**/tools.py"
+  - "**/*_tools.py"
   - "**/mcp_server*.py"
   - "**/*_agent.py"
   - "**/*_graph.py"
@@ -20,7 +21,18 @@ paths:
      vectorielle — pgvector pour l'index/les opérateurs côté SQLAlchemy,
      et `rules/ml.md` § Portail qualité avant promotion et § Surveillance en
      production pour la philosophie de porte qualité et de traçage,
-     appliquée ici par tour d'agent plutôt que par déploiement de modèle. -->
+     appliquée ici par tour d'agent plutôt que par déploiement de modèle.
+
+     Portée resserrée : pas de "**/tools/**/*.py". Un répertoire tools/ est
+     un nom générique — dans la plupart des dépôts il contient des utilitaires
+     et pas une définition @tool, et la règle se chargeait pour rien. Les
+     outils d'un agent rangés sous agents/, chains/ ou graphs/ restent
+     couverts par les motifs de répertoire ci-dessus ; ailleurs, ce sont les
+     modules tools.py et *_tools.py qui déclenchent. Un dépôt qui groupe ses
+     @tool dans un tools/ à lui ajoute le chemin dans sa copie locale.
+
+     Reste un faux positif assumé : un excel_tools.py d'utilitaires déclenche
+     encore. Un fichier, plus une arborescence entière. -->
 
 ## Chaînes LCEL et objets typés
 

@@ -16,7 +16,7 @@ rules/donnees.md         idem notebooks, data/, etl/, pipelines/ — pandas
 rules/bdd.md             idem db/, repositories/, migrations/, alembic/
 rules/deploiement.md     idem Dockerfile, docker-compose*.yml, k8s/, prefect.yaml
 rules/securite-api.md    idem src/api/, auth.py, security.py — Vault inclus
-rules/agents-ia.md       idem chains/, agents/, graphs/, tools/, rag/, mcp_server*.py
+rules/agents-ia.md       idem chains/, agents/, graphs/, rag/, tools.py, mcp_server*.py
 rules/streamlit.md       idem app.py, Home.py, pages/, .streamlit/
 rules/selenium.md        idem scraping/, scraper*.py, *_scraper.py
 rules/cicd.md            idem .gitea/workflows/

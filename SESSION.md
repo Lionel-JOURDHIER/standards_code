@@ -1038,3 +1038,42 @@ Forest) dans ml.md`, fusionné `--no-ff` dans `develop`, branche supprimée.
   présente vraiment.
 - Les trois points « à vérifier sur notre instance » de `cicd.md` sont toujours
   sans réponse. Ils bornent la forme des workflows tant qu'ils le restent.
+
+## [2026-09-02] — Portée `tools/` resserrée dans agents-ia.md
+
+**Branche :** `feature/portee-tools-agents-ia`
+
+**Fait :**
+- `**/tools/**/*.py` retiré du frontmatter d'`agents-ia.md`, remplacé par
+  `**/tools.py` et `**/*_tools.py`. La règle (3,3 k jetons) ne se charge plus
+  sur le `tools/` d'utilitaires que beaucoup de dépôts possèdent sans avoir le
+  moindre agent.
+- Ligne correspondante du tableau du README mise à jour.
+
+**Décisions techniques :**
+- Aucun motif ne peut exprimer « un `tools/` voisin d'`agents/` » en sémantique
+  `.gitignore`. Les outils rangés sous `agents/`, `chains/`, `graphs/` ou `rag/`
+  restaient de toute façon couverts par les motifs de répertoire existants : le
+  seul cas réellement perdu est un `tools/` de premier niveau contenant des
+  `@tool`, c'est-à-dire exactement le cas ambigu. Il se récupère en ajoutant le
+  chemin dans la copie locale, comme le font déjà `http.md` et `nodejs.md`.
+- Faux positif résiduel assumé et écrit dans l'en-tête : un `excel_tools.py`
+  d'utilitaires déclenche encore. Un fichier, plus une arborescence entière.
+
+**Fichiers principaux modifiés :**
+- `rules/agents-ia.md` — frontmatter `paths` et en-tête (raison du resserrement).
+- `README.md` — description de la portée d'`agents-ia.md`.
+
+**Vérifié :**
+- Douze cas passés par `git check-ignore` dans un dépôt jetable :
+  `src/agents/tools/recherche.py`, `src/chains/tools/sql.py`, `app/tools.py`,
+  `src/ia/recherche_tools.py`, `mcp_server_parc.py`, `src/devis_agent.py`
+  déclenchent ; `tools/export_xlsx.py`, `scripts/tools/nettoyage.py` et
+  `src/api/main.py` ne déclenchent plus.
+- Non vérifié : aucun dépôt consommateur réel n'a été ouvert pour constater le
+  chargement en session.
+
+**Points de vigilance pour la suite :**
+- Reste de l'audit de lisibilité : l'adresse de commit (gmail au lieu de
+  l'adresse professionnelle) et les trois points « à vérifier sur notre
+  instance » de `cicd.md`, toujours sans réponse.
