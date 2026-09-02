@@ -101,18 +101,29 @@ def charger_parc(chemin: Path, marche: str) -> dict[str, Logement]:
 
 ## Journalisation
 
-- Un seul mécanisme par projet, déclaré dans le `CLAUDE.md` du dépôt. Ne jamais
-  en introduire un second, ni remplacer celui en place au détour d'un correctif.
-- Projets sous **loguru** : la configuration des sinks est centralisée dans un
-  module unique. Un point d'entrée fait `from logger import logger`, un module
-  seulement importé fait `from loguru import logger` — loguru est global, les
-  sinks sont hérités. `logger.add()` et `logger.remove()` nulle part ailleurs :
-  une double configuration duplique chaque ligne de log.
+- **Le logger est loguru.** Ni `logging`, ni `print()`, ni un logger maison. Le
+  `CLAUDE.md` d'un dépôt ne peut y déroger que pour un programme qui n'a pas de
+  journal du tout (CLI courte, GUI), et en le disant. Ne jamais introduire un
+  second mécanisme, ni remplacer celui en place au détour d'un correctif.
+- La configuration des sinks est centralisée dans un module unique, qui commence
+  par `logger.remove()` — sinon le handler par défaut de loguru continue
+  d'écrire sur `stderr` en plus des sinks déclarés. Un point d'entrée fait
+  `from logger import logger`, un module seulement importé fait
+  `from loguru import logger` — loguru est global, les sinks sont hérités.
+  `logger.add()` et `logger.remove()` nulle part ailleurs : une double
+  configuration duplique chaque ligne de log.
+- Ce module lit le contexte de déploiement dans une variable d'environnement :
+  développement (niveau bas, rétention courte) et production (`INFO`, rétention
+  longue) sont deux jeux de `logger.add()`, pas un bloc commenté qu'on
+  décommente à la main.
 - Arguments passés en style loguru, pas en f-string :
   `logger.error("lecture {} : {}", chemin, err)`. La chaîne n'est formatée que
   si le niveau est actif.
-- Niveaux : `debug` pour le détail technique, `info` pour le suivi normal d'une
-  étape, `warning` pour un cas dégradé mais géré, `error` pour un échec.
+- Niveaux : `trace` pour le pas-à-pas qu'on n'active qu'en mise au point,
+  `debug` pour le détail technique, `info` pour le suivi normal d'une étape,
+  `warning` pour un cas dégradé mais géré, `error` pour un échec, `critical`
+  pour ce qui arrête le service. Un sink retient son niveau **et tous ceux
+  au-dessus** : `level="WARNING"` capte aussi les `error` et les `critical`.
 - Dans un `except`, `logger.exception("…")` et pas `logger.error(str(err))` :
   seul le premier joint la trace. Sans elle, il reste le message d'une erreur
   dont on ne sait plus d'où elle vient.
