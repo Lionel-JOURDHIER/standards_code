@@ -23,8 +23,8 @@ combler les manques « au lieu le plus logique ».
 | 8 | Pandas / Seaborn | fait |
 | 9 | Pandas — mon premier CRUD | fait |
 | 10 | SQLAlchemy | fait |
-| **11** | **pgvector** | **à faire — reprendre ici** |
-| 12 | PySpark | à faire |
+| 11 | pgvector | fait |
+| **12** | **PySpark** | **à faire — reprendre ici** |
 | 13 | Machine Learning | à faire |
 | 14 | Keras / PyTorch / NLP / audio / Hugging Face | à faire |
 | 15 | MLflow | à faire |
@@ -39,11 +39,10 @@ combler les manques « au lieu le plus logique ».
 | 24 | Redmail | à faire |
 | 25 | Workflow I | à faire |
 
-Le cours 11 était commencé : le support est lu (opérateurs `<=>` `<->` `<#>`
-`<+>`, index HNSW et IVFFlat, `CREATE EXTENSION vector`, image
-`pgvector/pgvector:pg16`), le corpus des `.md` a été grepé — **`pgvector` n'est
-mentionné nulle part**, seulement le type `vector` dans `rules/bdd.md:170` au
-titre de ce qui n'est pas testable sur SQLite. Rien n'a encore été écrit.
+Cours 11 (pgvector) traité : nouvelle section « Recherche vectorielle —
+pgvector » dans `rules/bdd.md`, entre Modèles et Requêtes (commit `feat :
+recherche vectorielle pgvector dans bdd.md`, fusionné dans `develop`). Pas de
+nouveau fichier de règle — treize règles inchangé.
 
 ### Décisions techniques prises pendant la revue
 
@@ -87,7 +86,11 @@ titre de ce qui n'est pas testable sur SQLite. Rien n'a encore été écrit.
 - `rules/cicd.md` — version de Python alignée, un seul appel `pytest`, une CI
   vérifie et ne corrige pas, section « Un échec doit bloquer ».
 - `rules/bdd.md` — deux styles 1.x/2.0, sync ou async, `session.dispose()`
-  n'existe pas, conception Merise, `WHERE`/`HAVING`, `echo=True` hors livré.
+  n'existe pas, conception Merise, `WHERE`/`HAVING`, `echo=True` hors livré,
+  section « Recherche vectorielle — pgvector » (extension activée en migration
+  Alembic, `pgvector.sqlalchemy.Vector(N)` plutôt que `psycopg2` brut,
+  opérateur de distance selon le cas d'usage, index ANN HNSW/IVFFlat obligatoire
+  au-delà de ~10 000 lignes, `EXPLAIN (ANALYZE, BUFFERS)` pour vérifier).
 - `README.md`, `modeles/modele-CLAUDE.md` — **treize règles** désormais.
 
 ### Vérifié
@@ -113,5 +116,13 @@ titre de ce qui n'est pas testable sur SQLite. Rien n'a encore été écrit.
   de `.github/workflows`).
 - Le format des badges Gitea dans `modeles/modele-README.md` est à confirmer sur
   l'instance réelle.
-- Cours 11 à 17 : ils vont toucher `rules/ml.md` et `rules/donnees.md`, qui se
-  chargent tous deux sur les notebooks — vérifier qu'ils ne se contredisent pas.
+- Cours 11 (pgvector) a fini dans `rules/bdd.md`, pas `rules/ml.md` : c'est une
+  extension PostgreSQL/SQLAlchemy, pas un sujet de cycle de vie modèle. Cours 12
+  à 17 restent à situer ; ceux qui toucheront `rules/ml.md` et `rules/donnees.md`
+  se chargent tous deux sur les notebooks — vérifier qu'ils ne se contredisent
+  pas.
+- Divergence assumée ajoutée par le cours 11 : le support montre un accès
+  `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
+  `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
+  SQLAlchemy 2.0 déjà en place — `psycopg2` brut reste toléré pour un script
+  d'exploration ponctuel seulement.
