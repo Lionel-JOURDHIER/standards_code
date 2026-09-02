@@ -29,6 +29,7 @@ modeles/FICHE-MODELE.md  une par modèle promu en production
 hooks/pre-commit         garde-fou git, configurable par dépôt
 hooks/standards.conf.exemple
 hooks/verifier-installation  contrôle que le garde-fou est vraiment actif
+hooks/maj-standards      met à jour le sous-module et les règles d'un dépôt
 tests/banc-hook.sh       banc de test du hook, à relancer après l'avoir modifié
 ```
 
@@ -101,17 +102,33 @@ la racine), et une `standards.conf` en CRLF qui désactivait tout en silence.
 ## Mettre à jour un dépôt
 
 ```bash
-git -C .claude/standards pull
-for r in .claude/rules/*.md; do cp ".claude/standards/rules/$(basename "$r")" "$r"; done
-cp .claude/standards/hooks/pre-commit .githooks/pre-commit
-bash .claude/standards/hooks/verifier-installation
+bash .claude/standards/hooks/maj-standards
 ```
 
-La boucle ne rafraîchit que les règles **déjà présentes** dans le dépôt. Un
+Le script ne rafraîchit que les règles **déjà présentes** dans le dépôt. Un
 `cp rules/*.md` déverserait les dix-sept règles dans tous les projets, y compris
-celles qui n'y servent à rien.
+celles qui n'y servent à rien. Pour en ajouter une au passage :
 
-Le vérificateur signale une copie du hook qui aurait dérivé de la référence.
+```bash
+REGLES_EN_PLUS=workflow-session.md bash .claude/standards/hooks/maj-standards
+```
+
+Il remet aussi le hook en place et lance le vérificateur, qui signale une copie
+du hook ayant dérivé de la référence.
+
+Il ne fait pas de `git pull` dans le sous-module, et ce n'est pas un détail :
+l'historique de ce dépôt a été réécrit une fois, et un `pull` échoue dès que le
+commit épinglé n'est plus un ancêtre du nouveau `main`. Le script fait un
+`fetch` puis un `reset --hard`, ce qui marche dans les deux cas.
+
+Un second argument permet de tirer depuis un dépôt local plutôt que depuis
+`origin` — quand le remote n'est pas joignable, ou pas encore à jour :
+
+```bash
+bash .claude/standards/hooks/maj-standards . /chemin/vers/standards-code
+```
+
+Le script ne committe rien : il termine en affichant ce qui reste à valider.
 
 Ne recopiez que les règles des langages présents : une règle chargée pour rien
 consomme du contexte à chaque session.
