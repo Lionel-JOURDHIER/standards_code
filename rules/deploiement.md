@@ -72,6 +72,57 @@ d'instances, quelles données survivent à un arrêt, qui peut parler à qui.
   entière d'accès non prévus, dans le même esprit que le CORS restreint et
   les rôles d'API décrits dans `rules/securite-api.md`.
 
+## Reverse proxy — Traefik
+
+<!-- Source : tuto-traefik.html (proxy vs reverse proxy, vocabulaire
+     EntryPoint/Router/Service/Middleware, docker-compose + labels, socket
+     Docker, dashboard, ACME). -->
+
+- Aucun service applicatif ne publie de port (`ports:`) : un seul port
+  publié dans tout le projet, celui du reverse proxy. Les services se
+  joignent entre eux par nom sur le réseau Compose partagé — un conteneur
+  qui n'a pas besoin d'être atteint depuis l'extérieur ne doit jamais
+  l'être, dans le même esprit que le réseau restreint du § Docker
+  Compose ci-dessus.
+- Vocabulaire minimal : **EntryPoint** (où ça entre, `:80`), **Router**
+  (règle de correspondance — `Host(...)`, `PathPrefix(...)`, combinables
+  par `&&`), **Service** (le port interne du conteneur, jamais le port
+  publié — s'y tromper donne un 502), **Middleware** (ce qui se passe entre
+  les deux — `stripprefix`, `basicauth`, `ratelimit`).
+- Labels Docker = configuration dynamique relue à chaud, sans redémarrer le
+  proxy. `traefik.enable=true` obligatoire sur chaque service à exposer —
+  ignoré par défaut sinon.
+- Les noms de routers/services sont globaux au provider Docker, pas
+  cloisonnés par projet Compose : deux projets qui nomment un router `api`
+  se collisionnent (404 ou timeout). Contraindre par
+  `--providers.docker.constraints` sur le label `com.docker.compose.project`
+  pour rattacher chaque instance de Traefik à son seul projet.
+- Le socket Docker monté dans le proxy (`/var/run/docker.sock`) équivaut en
+  pratique à un accès administrateur de l'hôte — la découverte automatique
+  en dépend, mais c'est la partie la plus sensible de l'architecture. Monter
+  en lecture seule (`:ro`) réduit sans éliminer le risque ; en production,
+  préférer un proxy de socket (type `docker-socket-proxy`) ou le provider
+  `file` (configuration statique, sans accès au socket).
+- Dashboard **jamais** en `--api.insecure=true` (topologie complète exposée
+  sans authentification) : le router comme n'importe quel service, protégé
+  par un middleware `basicauth`.
+- Exposer une API sous `app.localhost/api` élimine le CORS par construction
+  (même origine) plutôt que de le corriger — préférer ce routage au
+  middleware `headers` (CORS), qui reste un repli pour les cas où les deux
+  origines ne sont pas maîtrisables (app mobile, intégration tierce) ; la
+  politique CORS elle-même reste celle de `rules/securite-api.md` §
+  Durcissement.
+- Le `ratelimit` du proxy est un niveau différent, complémentaire, du
+  `slowapi` applicatif de `rules/securite-api.md` : à poser devant toute
+  route d'inférence, avant même l'authentification.
+- HTTPS géré par le proxy (certificats ACME/Let's Encrypt), applications en
+  HTTP en interne — à poser dès qu'un domaine public existe, pas seulement
+  en environnement de démonstration.
+- Diagnostic : 404 = la route est inconnue de Traefik (label, règle ou
+  réseau à revoir) ; 502 = la route est connue mais l'application est
+  injoignable (mauvais port de service, ou application qui écoute sur
+  `127.0.0.1` au lieu de `0.0.0.0` dans le conteneur).
+
 ## Stockage objet compatible S3 — MinIO
 
 - MinIO sert à la fois DVC (jeux de données versionnés, `rules/ml.md`) et le
