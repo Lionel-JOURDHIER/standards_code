@@ -27,6 +27,23 @@ pour la bonne raison et que son message dit laquelle.
   à lire le corps pour savoir ce qui est cassé.
 - `conftest.py` au niveau qui correspond à la portée réelle d'une fixture. Une
   fixture à la racine est chargée pour tout le monde ; c'est rarement voulu.
+- Configuration dans `[tool.pytest.ini_options]` du `pyproject.toml`, pas dans
+  un `pytest.ini` séparé — même raison que pour ruff, un seul fichier de
+  configuration par projet :
+
+  ```toml
+  [tool.pytest.ini_options]
+  testpaths = ["tests"]
+  addopts = "-q --strict-markers"
+  markers = ["slow: exclu du lancement par défaut"]
+  ```
+
+  `--strict-markers` fait échouer un marqueur non déclaré, ce qui évite qu'un
+  `@pytest.mark.slwo` mal orthographié passe pour un test ordinaire.
+- La couverture **ne fait pas partie** des options par défaut : elle ralentit
+  chaque lancement et brouille les traces. Elle se demande quand on la veut,
+  `uv run pytest --cov=src --cov-report=term-missing`, et en intégration
+  continue.
 - Un test vérifie **un** comportement. Trois assertions sur la même sortie sont
   un test, trois scénarios en sont trois.
 - **Jamais de `sys.path.insert` ni de bricolage de chemin** dans un test ou dans
