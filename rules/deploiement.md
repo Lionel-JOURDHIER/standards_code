@@ -104,6 +104,11 @@ d'instances, quelles données survivent à un arrêt, qui peut parler à qui.
   règles que le reste de `rules/ml.md` à l'intérieur de chaque tâche
   (reproductibilité, fuite de données, critères de promotion) : l'orchestration
   planifie et relance, elle ne remplace aucune des vérifications déjà décrites.
+- Un contrôle qualité (Evidently `TestSuite`, `rules/ml.md` § Portail qualité)
+  est une `@task` comme une autre : son échec bloque le flow — l'orchestrateur
+  vérifie quotidiennement la qualité des données entrantes et arrête
+  l'entraînement ou l'inférence en aval plutôt que de laisser une anomalie se
+  propager. Pas de traitement spécial pour ce type de tâche.
 
 ## Traitement asynchrone — Celery
 
