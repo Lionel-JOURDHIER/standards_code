@@ -864,3 +864,35 @@ liste et chemin de `agents-ia.md`).
 Travail réalisé sur `feature/agents-ia`, commit `feat : nouvelle règle
 agents-ia (LangChain, LangGraph, RAG, MCP)`, fusionné `--no-ff` dans
 `develop`, branche supprimée.
+
+## Cours 27 (hors liste initiale) — tuto-traefik
+
+Cours découvert lui aussi après la clôture de la revue des 25 cours, source
+`.html` (pas de `.txt` pré-extrait) — converti par un script Python maison
+(`bs4` absent de l'environnement, pas de `pandoc`/`lynx`/`w3m` disponibles)
+vers `tuto-traefik.html.txt` (1112 lignes) dans le scratchpad. Contenu :
+proxy vs reverse proxy, vocabulaire Traefik (EntryPoint/Router/Service/
+Middleware), mise en place d'un docker-compose avec labels Traefik devant
+un frontend + une API FastAPI, dashboard sécurisé par basicauth, exposition
+du socket Docker, ACME/HTTPS.
+
+Digest fait par agent (lecture intégrale + relecture de `rules/deploiement.md`
+et `rules/securite-api.md` pour vérifier chevauchement/contradiction).
+Aucune contradiction trouvée : `deploiement.md` ne mentionnait aucun reverse
+proxy, c'est un vrai manque plutôt qu'un doublon. Nouvelle section
+`## Reverse proxy — Traefik` ajoutée dans `rules/deploiement.md`, juste
+après `## Docker Compose — configuration et secrets` (pas de nouveau
+fichier — le volume ne justifiait pas un dix-huitième fichier de règle avec
+son propre glob à synchroniser). Renvois plutôt que doublons vers
+`rules/securite-api.md` § Durcissement pour la politique CORS, et pour le
+rate limiting applicatif (`slowapi`) distingué du rate limiting de bord
+(`ratelimit` Traefik, complémentaire, pas un remplacement).
+
+Non retenu (scaffolding pédagogique) : quiz, narration « à l'écran », pas-à-
+pas de démonstration, exercice guidé, comparatif Traefik vs Caddy/nginx/Kong
+en tant que tel (retenu seulement le diagnostic 404 vs 502, qui est un
+réflexe de débogage réutilisable, pas un comparatif d'outils).
+
+Travail réalisé sur `feature/traefik`, commit `feat : section Reverse proxy
+- Traefik dans deploiement.md`, fusionné `--no-ff` dans `develop`, branche
+supprimée.
