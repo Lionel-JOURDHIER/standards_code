@@ -813,3 +813,54 @@ pour un résumé final si besoin.
   vocabulaire et les mécanismes décrits en slides, pas sur un extrait de code
   du support lui-même — à garder en tête si Lionel veut vérifier contre
   l'API Evidently réelle (versions récentes) avant de s'y fier en production.
+
+## Cours 26 (hors liste initiale) — DEVIA 25 - IA Agentic
+
+Cours découvert après la clôture de la revue des 25 cours (absent du corpus
+scratchpad pré-extrait, source PDF trouvée directement dans
+`/home/lionel/DEVIA/Support`, extraite via `pdftotext -layout` — 2561 lignes).
+Contenu : LangChain/LCEL, LangGraph (agents, boucle ReAct, nœuds
+d'évaluation, guardrail), RAG (LangChain+ChromaDB, LlamaIndex+FAISS),
+sécurité (injection de prompt, défense en profondeur), human-in-the-loop
+(checkpoints, time travel), multi-agent (pair-à-pair, superviseur central),
+Langfuse, connecteur MCP. Sujet entièrement neuf : aucune règle existante ne
+couvrait LangChain/LangGraph/agents avant ce cours.
+
+Digest fait par agent (lecture intégrale du support + relecture complète de
+`rules/securite-api.md`, `rules/ml.md`, `rules/bdd.md`, `rules/deploiement.md`
+pour repérer tout chevauchement avant d'écrire). Nouvelle règle créée :
+`rules/agents-ia.md` (dix-septième règle du dépôt), avec des renvois plutôt
+que des doublons vers l'existant :
+- `rules/securite-api.md` § Si le modèle servi est un LLM garde le principe
+  (défense en profondeur), `rules/agents-ia.md` § Sécurité — injection de
+  prompt porte l'implémentation (taxonomie d'attaque, quatre niveaux). Un
+  renvoi ajouté dans `securite-api.md`.
+- `rules/bdd.md` § Recherche vectorielle — pgvector garde l'index/les
+  opérateurs côté SQLAlchemy ; `agents-ia.md` n'ajoute que ce qui est
+  vraiment neuf (le `PGVector` de LangChain côté microservice RAG, et le
+  critère de choix entre les deux : mélanger filtre relationnel et
+  similarité vectorielle penche vers SQLAlchemy).
+- `rules/ml.md` § Portail qualité avant promotion et § Humain dans la boucle
+  citées en cross-référence dans `agents-ia.md` (même philosophie de porte
+  qui bloque / de suspension avant action, appliquée par tour d'agent plutôt
+  que par déploiement de modèle) — aucune des deux règles ml.md modifiée, le
+  parallèle suffisait.
+- `rules/deploiement.md` non modifié : le point neuf sur ce cours (un
+  serveur MCP en `streamable-http` exposé au-delà de `localhost` doit
+  recevoir le même traitement qu'une route FastAPI — auth, rate limiting,
+  CORS) est un ajout prescriptif de `agents-ia.md` § Connecteur MCP, pas une
+  extension de `deploiement.md`.
+
+Non retenu (scaffolding pédagogique) : Fondamentaux Ollama/tokenisation/
+température (théorie d'installation et de concepts), narration du cours
+(métaphores « bras »/« juge »/« douanier »), exercices, comparatif
+FastAPI/FastMCP en tant que tel (seul le critère de transport `stdio` vs
+`streamable-http` a été retenu), tableau de stratégies de mémoire exotiques
+(Entity Memory, Vectorized History — gardé un menu court à trois options).
+
+`README.md` et `modeles/modele-CLAUDE.md` mis à jour (dix-sept règles,
+liste et chemin de `agents-ia.md`).
+
+Travail réalisé sur `feature/agents-ia`, commit `feat : nouvelle règle
+agents-ia (LangChain, LangGraph, RAG, MCP)`, fusionné `--no-ff` dans
+`develop`, branche supprimée.
