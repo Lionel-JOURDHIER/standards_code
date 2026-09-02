@@ -896,3 +896,62 @@ réflexe de débogage réutilisable, pas un comparatif d'outils).
 Travail réalisé sur `feature/traefik`, commit `feat : section Reverse proxy
 - Traefik dans deploiement.md`, fusionné `--no-ff` dans `develop`, branche
 supprimée.
+
+## Cours 28 (hors liste initiale) — dossier « Machine Learning »
+
+Nouveau dossier découvert : `Machine Learning.pptx` (support de base,
+supervisé/non supervisé, nettoyage, pipeline scikit-learn, métriques,
+MLflow, clustering, PCA) et `Machine Learning/` (onze PDF courts : Naive
+Bayes, Bagging, AdaBoost, histoire du Perceptron, SVC, Stacking, SVM/SVR,
+veille AutoML, arbre de décision, Isolation Forest, KNN). Traité **sans
+agent**, sur demande explicite — lecture directe de chaque fichier.
+
+Extraction : `.pptx` racine converti via `python-pptx` (pas de `bs4`/
+`pandoc`/`lynx`/`w3m` disponibles, script maison déjà utilisé au cours 27) ;
+les onze PDF via `pdftotext -layout`. Douze fichiers, tous courts (22 à
+344 lignes), lus intégralement un par un.
+
+La majorité du contenu est de la théorie pure sans convention de code :
+histoire du Perceptron, principe de Naive Bayes/AdaBoost/Stacking/SVC/SVM/
+arbre de décision/Isolation Forest, définitions de métriques (précision,
+rappel, accuracy, F1, matrice de confusion) déjà couvertes conceptuellement
+par `rules/ml.md` § Métriques. Le support pptx racine reprend d'ailleurs mot
+pour mot la divergence PCA/RGPD déjà actée au cours 13 (« anonymat des
+données (RGPD) ») — cohérent avec la décision déjà prise, rien à rejouer.
+
+Trois points particuliers réellement neufs et transférables, absents de
+`rules/ml.md` :
+- **Mise à l'échelle par famille d'algorithme** : les algorithmes à distance
+  (KNN — source du point, SVM, k-means, PCA) l'exigent, les algorithmes à
+  arbres non — absent jusqu'ici, seule la fuite de données via
+  Pipeline/ColumnTransformer était couverte, pas la nécessité elle-même.
+- **Méthodes ensemblistes** (bagging/boosting/stacking, PDF dédiés à
+  chacune) condensées en une table de trois lignes plutôt que trois
+  sections séparées — bagging réduit la variance, boosting le biais (plus
+  sensible au bruit), stacking gagne à combiner des modèles peu corrélés
+  mais coûte cher sur un petit jeu de données.
+- **AutoML** (PyCaret/TPOT/AutoKeras, PDF de veille dédié) rattaché au § déjà
+  existant Baseline plutôt qu'une section à part : accélérateur de
+  comparatif multi-modèle, pas un pilote automatique — risques nommés par le
+  support repris (garbage in/garbage out, surapprentissage par balayage
+  massif, perte d'interprétabilité).
+- Un quatrième point (Isolation Forest) ajouté au § Apprentissage non
+  supervisé déjà existant plutôt qu'une nouvelle section : détection
+  d'anomalies, mêmes réserves que le clustering (pas de vérité terrain),
+  taux de contamination en configuration.
+
+Nouvelle section `## Modèles classiques — scikit-learn` ajoutée dans
+`rules/ml.md`, entre § Métriques et § Apprentissage non supervisé (qui a
+reçu son bullet Isolation Forest). Pas de nouveau fichier.
+
+Non retenu (théorie ou déjà couvert) : Naive Bayes, AdaBoost, Stacking,
+SVC/SVM (concepts), histoire du Perceptron (aucune convention), toutes les
+définitions de métriques de classification déjà dans § Métriques, sous/
+sur-échantillonnage déjà couvert au § Fuite de données, `Pipeline`/
+`ColumnTransformer` déjà couvert au § Fuite de données, `GridSearchCV` déjà
+couvert au § Recherche d'hyperparamètres, MLflow logging déjà couvert au
+§ MLflow.
+
+Travail réalisé sur `feature/ml-classiques`, commit `feat : modèles
+classiques scikit-learn (mise à l'échelle, ensemblistes, AutoML, Isolation
+Forest) dans ml.md`, fusionné `--no-ff` dans `develop`, branche supprimée.
