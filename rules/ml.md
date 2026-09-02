@@ -163,6 +163,8 @@ ne s'appliquent pas telles quelles.
   artifact store (poids, courbes, gros fichiers — S3/MinIO) sont deux backends
   séparés. Les confondre fait grossir une base relationnelle avec des blobs, ou
   interroger un espace de stockage objet comme s'il indexait des métriques.
+  Configuration concrète du backend objet (MinIO, buckets, Compose) :
+  `rules/deploiement.md` § Stockage objet compatible S3.
 - `log_model(model, "model", registered_model_name=...)` inscrit directement
   le modèle au Model Registry. Sans ce paramètre, le modèle reste un artefact
   du run, invisible du Registry tant que `mlflow.register_model()` n'est pas
@@ -181,11 +183,14 @@ ne s'appliquent pas telles quelles.
   en place sur le test gelé, tient le budget de latence, ne régresse sur aucune
   tranche sensible.
 - Un alias (`@production`, `@champion`) est préférable au numéro de version brut
-  pour sa lisibilité, mais le service ne le résout pas à chaque appel : il le
-  résout une fois (démarrage, ou événement explicite d'invalidation de cache) et
-  sert cette **version figée** jusqu'au prochain événement. Le résoudre à chaque
-  requête revient à laisser une promotion changer le comportement en production
-  sans trace de déploiement.
+  pour sa lisibilité, mais le service ne recharge pas le modèle à chaque appel :
+  il vérifie, via `MlflowClient`, la version actuelle derrière l'alias
+  (`get_model_version_by_alias`, un appel léger au Registry) et ne recharge le
+  modèle complet (`mlflow.pyfunc.load_model`) que si cette version a changé
+  depuis la dernière fois — sert cette **version mise en cache** sinon. Le
+  modèle en mémoire reste donc figé entre deux changements réels de l'alias ; ce
+  qui varie à chaque appel, c'est seulement la question bon marché « la version
+  a-t-elle changé ? », jamais le rechargement lui-même.
 - Le champion précédent reste déployable. Retour arrière en une commande.
 
 ## Modèles pré-entraînés — Hugging Face
@@ -261,6 +266,8 @@ Dans l'ordre de ce qui casse en premier :
   bruit et finira coupée.
 - Sentry pour les exceptions, Grafana pour les tendances. Ne pas alerter sur la
   dérive dans Sentry.
+- Distinct de la santé du conteneur qui sert le modèle (disponibilité, charge) :
+  voir `rules/deploiement.md` § Monitoring d'infrastructure.
 
 ## Réentraînement
 

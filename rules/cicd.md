@@ -67,6 +67,11 @@ GitHub) ou `self` (uniquement depuis notre instance).
   secret de dépôt, donc une rotation à prévoir et à écrire quelque part.
 - Un secret n'est jamais échoïsé, ni passé en argument de ligne de commande
   (visible dans les logs de processus), ni écrit dans un artefact.
+- Un scan de secrets (Gitleaks ou équivalent) en étape de CI, `fetch-depth: 0`
+  pour couvrir tout l'historique et pas seulement le dernier commit, et la
+  job en échec bloquant plutôt qu'informatif — un secret déjà poussé n'est
+  plus un secret même après un correctif ultérieur, seule la rotation le
+  répare.
 
 ## Publication de documentation
 
