@@ -31,8 +31,8 @@ combler les manques « au lieu le plus logique ».
 | 16 | MLOps 0 → 4 | fait |
 | 17 | Evidently | fait |
 | 18 | Sécurité en Python | fait |
-| **19** | **hash / cryptage** | **à faire — reprendre ici** |
-| 20 | Sécuriser une API FastAPI | à faire |
+| 19 | hash / cryptage | fait |
+| **20** | **Sécuriser une API FastAPI** | **à faire — reprendre ici** |
 | 21 | Vault 1 & 2 | à faire |
 | 22 | Streamlit | à faire |
 | 23 | Selenium | à faire |
@@ -261,6 +261,46 @@ trop court pour receler d'autre divergence ou complément que celui listé
 ci-dessus ; les points 401/403, JWT sans secret dans le payload et décodage
 paramétré sont déjà couverts mot pour mot par `rules/securite-api.md`.
 
+Cours 19 (hash / cryptage, 1 support) traité : **aucune modification de
+règle**. Le support couvre trois volets — hachage de mot de passe (mauvais
+exemple `hashlib.sha256` + comparaison par `==`, puis Werkzeug
+`generate_password_hash`/`check_password_hash`), chiffrement symétrique
+(`cryptography.Fernet`) et asymétrique (RSA/OAEP, `cryptography.hazmat`) — et
+chacun est déjà couvert mot pour mot :
+- `rules/python.md` § Mots de passe et saisie sensible interdit déjà
+  `hashlib.sha256` pour un mot de passe et impose la comparaison par la
+  fonction de vérification de la bibliothèque, jamais par `==` — exactement
+  l'anti-patron du support (`verifier_mot_de_passe` fait `== ` sur les hash
+  recalculés).
+- `rules/securite-api.md` § Chiffrement des données couvre déjà Fernet
+  (symétrique) et RSA/OAEP 2048 bits (asymétrique) au même niveau de détail
+  que le support, clés hors code incluses.
+- La combinaison décrite par le support (asymétrique pour échanger une clé,
+  symétrique pour chiffrer le volume) reste une remarque conceptuelle, pas un
+  geste de code distinct à encoder en règle.
+- La suggestion du support d'ajouter un `try/except` autour du
+  chiffrement/déchiffrement est déjà couverte, en général et pas
+  spécifiquement à la crypto, par `rules/python.md` § Gestion des exceptions
+  (pas de `except:`/`except Exception:` nu, remontée jusqu'au point d'entrée).
+
+**Divergence assumée** : le support liste `SHA-256` comme fonction de
+hachage « sécurisée » au même titre que `bcrypt` pour un mot de passe
+(« Utilisez toujours une fonction de hachage cryptographique sécurisée comme
+SHA-256 ou bcrypt »). C'est inexact pour ce cas d'usage précis — SHA-256 est
+volontairement rapide, donc forçable à haute vitesse, ce qui est justement la
+raison pour laquelle `rules/python.md` l'exclut explicitement pour un mot de
+passe (bcrypt/pwdlib est lent par conception). Règle du dépôt maintenue telle
+quelle, aucune reformulation : SHA-256 reste approprié pour de l'intégrité
+(empreinte de fichier) mais pas pour un mot de passe. Werkzeug (deuxième
+exemple du support) n'est pas ajouté à la liste des bibliothèques écartées à
+côté de `passlib` : contrairement à `passlib`, rien n'indique qu'il soit mal
+maintenu ou insuffisamment salé — l'absence de mention n'est pas une mise en
+garde, seulement le silence sur une bibliothèque tierce hors du choix déjà
+prescrit (pwdlib/bcrypt).
+
+Pas de nouveau fichier de règle, aucun fichier existant modifié — quatorze
+règles inchangé.
+
 ### Décisions techniques prises pendant la revue
 
 - **loguru est obligatoire** (demande explicite, 2026-09-02). Ce n'est plus « un
@@ -374,11 +414,16 @@ paramétré sont déjà couverts mot pour mot par `rules/securite-api.md`.
   plan de onze lignes annonçant les cours 19/20, situé dans
   `rules/securite-api.md` (existant, pas `rules/python.md` — le plan parle
   d'API, JWT, OAuth2, pas de stockage de mot de passe en CLI) — aucun nouveau
-  fichier, un seul bullet ajouté. Cours 19 (hash/cryptage) ira
-  vraisemblablement dans `rules/python.md` § Mots de passe et saisie sensible
-  et `rules/securite-api.md` § Chiffrement des données, déjà bien fournis
-  (bcrypt/pwdlib, Fernet, RSA/OAEP) — vérifier à la lecture s'il reste un
-  geste concret non couvert plutôt que de dupliquer.
+  fichier, un seul bullet ajouté. Cours 19 (hash/cryptage) confirmé sans
+  aucune modification : `rules/python.md` § Mots de passe et saisie sensible
+  et `rules/securite-api.md` § Chiffrement des données couvraient déjà tout
+  le contenu du support, anti-patron `==`/`hashlib.sha256` inclus — premier
+  cours de la revue sans aucun fichier de règle touché. Cours 20 (Sécuriser
+  une API FastAPI) ira vraisemblablement, lui aussi, en confirmation plutôt
+  qu'en ajout : `rules/securite-api.md` est déjà sourcé directement de ce
+  même kit de formation (créé avant le début de cette revue systématique,
+  commit `77efade`) — vérifier à la lecture s'il reste un atelier ou un
+  détail du support non repris plutôt que de dupliquer.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
