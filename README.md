@@ -7,6 +7,7 @@ projet.
 ```
 socle-code.md            règles valables partout, importées dans chaque CLAUDE.md
 rules/python.md          règles chargées seulement sur les .py
+rules/tests-python.md    idem tests/, test_*.py, conftest.py
 rules/javascript.md      idem .js / .mjs / .cjs / .html — code navigateur
 rules/nodejs.md          idem package.json, .mjs, server/ — code serveur
 rules/vba.md             idem .bas / .cls / .frm
@@ -99,7 +100,7 @@ bash .claude/standards/hooks/verifier-installation
 ```
 
 La boucle ne rafraîchit que les règles **déjà présentes** dans le dépôt. Un
-`cp rules/*.md` déverserait les dix règles dans tous les projets, y compris
+`cp rules/*.md` déverserait les onze règles dans tous les projets, y compris
 celles qui n'y servent à rien.
 
 Le vérificateur signale une copie du hook qui aurait dérivé de la référence.
