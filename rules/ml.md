@@ -216,14 +216,27 @@ sert.
 ## Portail qualité avant promotion
 
 Le rapport de dérive n'est pas un tableau de bord : c'est un test qui bloque.
-Avant une promotion ou une mise en service, le pipeline compare le lot courant à
-la fenêtre de référence (Evidently, `Report` sur un preset de dérive ou de
-qualité), extrait les métriques du snapshot et lève une exception si un seuil
-métier est franchi. Un rapport qu'on regarde après coup ne protège de rien.
+Evidently sépare les deux usages, pas interchangeables : un `Report` (preset
+`DataDriftPreset`, `DataSummaryPreset`, `TargetDriftPreset`…) est un
+diagnostic visuel pensé pour être regardé, pas pour décider tout seul. La porte
+qualité automatisée est un `TestSuite` : son résultat est binaire
+(succès/échec), exploitable sans intervention humaine dans un pipeline CI/CD
+ou une tâche d'orchestrateur (`rules/deploiement.md` § Orchestration —
+Prefect). Avant une promotion ou une mise en service, le pipeline compare le
+lot courant à la fenêtre de référence via un `TestSuite`, et lève une
+exception dès qu'un test échoue. Un rapport qu'on regarde après coup ne
+protège de rien.
 
 - Le seuil est dans la configuration et dans la fiche modèle, pas dans le code
   du contrôle.
-- Le rapport est archivé en artefact du run (JSON + HTML), pas seulement affiché.
+- Seuil relatif (la dérive ne doit pas être statistiquement significative — test
+  de Kolmogorov-Smirnov pour une colonne numérique avec un volume suffisant,
+  PSI ou Chi² pour une catégorielle, choix automatique selon le type et la
+  taille, personnalisable colonne par colonne) ou seuil absolu (valeurs
+  manquantes à zéro, latence sous X secondes) : le second l'emporte dès qu'une
+  règle métier existe, le premier sert de filet là où aucune n'est écrite.
+- `Report` et `TestSuite` sont archivés tous deux en artefact du run (JSON, et
+  HTML pour le `Report`), pas seulement affichés ou exécutés puis jetés.
 
 ## Écart entraînement / service
 
@@ -262,6 +275,11 @@ Dans l'ordre de ce qui casse en premier :
 
 - Toute prédiction est tracée : entrée ou son empreinte, version du modèle,
   sortie, score, horodatage. Sans ça aucun incident n'est analysable.
+- Un snapshot Evidently (JSON léger) par exécution périodique de surveillance
+  alimente un `Workspace` — distinct de l'archivage par run du § Portail
+  qualité : celui-ci reproduit un run précis, le `Workspace` trace une
+  tendance dans le temps (`evidently ui`, panels de dérive/latence). Les deux
+  coexistent, l'un ne remplace pas l'autre.
 - Chaque alerte a un destinataire et une action. Une alerte sans action est du
   bruit et finira coupée.
 - Sentry pour les exceptions, Grafana pour les tendances. Ne pas alerter sur la
