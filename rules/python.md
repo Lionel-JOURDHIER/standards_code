@@ -18,6 +18,44 @@ paths:
 - Ce que ruff vérifie n'a pas à être répété ici : longueur de ligne, ordre des
   imports, guillemets, présence des docstrings.
 
+### Configuration de ruff
+
+Toute la configuration de l'outillage vit dans `pyproject.toml`. Pas de
+`.ruff.toml`, pas de `setup.cfg`, pas de `pytest.ini` : un seul fichier, sinon
+personne ne sait lequel gagne.
+
+```toml
+[tool.ruff]
+line-length = 88
+target-version = "py311"        # la version réellement visée par le projet
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+```
+
+| Code | Ce qu'il apporte |
+|---|---|
+| `E`, `W` | style PEP 8 — espaces, indentation, lignes |
+| `F` | erreurs logiques : variable non définie, import inutilisé |
+| `I` | tri et regroupement des imports |
+| `D` | présence et forme des docstrings |
+
+- `convention = "google"` est **obligatoire** avec `D` : sans elle, ruff
+  applique les règles PEP 257 par défaut et signale nos sections `Args:` /
+  `Returns:` comme des erreurs de format.
+- Ce qu'on **ne** met **pas** dans `ignore` : `D101`, `D102`, `D103`,
+  `D104` — ce sont exactement les docstrings que le standard exige. Les
+  désactiver « parce que la fonction est courte » revient à supprimer la règle.
+  `D100` (docstring de module) est le seul écart courant admis.
+- Un `ignore` se justifie dans le fichier, en commentaire, avec sa raison. Une
+  liste d'exclusions héritée d'un autre projet et recopiée sans la lire ne veut
+  plus rien dire.
+- Une exception ponctuelle se marque à la ligne concernée
+  (`# noqa: E501`, avec le code), jamais par une exclusion globale.
+
 ## Structure d'un projet
 
 - Le code vit sous `src/<nom_du_package>/`, jamais à la racine. **Le nom du
