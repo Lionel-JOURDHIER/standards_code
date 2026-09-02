@@ -1246,3 +1246,55 @@ ce résumé)
   surveiller, elle se charge sur tout `Dockerfile*` et tout `compose`.
 - Les mesures d'affinité et de streaming du support ont été relevées sur
   `traefik:v3.6.25` — à revérifier si le proxy change de version majeure.
+
+## [2026-09-02] — Script de mise à jour du sous-module
+
+**Branche :** `feature/script-maj-sous-module`
+
+**Fait :**
+- `hooks/maj-standards` : met à jour le sous-module `.claude/standards` d'un
+  dépôt consommateur, rafraîchit les règles déjà présentes, remet le hook et
+  lance `verifier-installation`. Ne committe rien, affiche ce qui reste à
+  valider.
+- README : ligne d'arborescence, et § « Mettre à jour un dépôt » réécrit
+  autour du script.
+
+**Décisions techniques :**
+- **`fetch` + `reset --hard`, jamais `pull`.** L'historique de ce dépôt a été
+  réécrit : le commit épinglé par un sous-module ancien n'est plus un ancêtre
+  du nouveau `main`, donc l'avance rapide est impossible. La séquence que le
+  README documentait échouait sur tout dépôt installé avant la réécriture.
+- Rangé dans `hooks/` à côté de `verifier-installation`, qui n'est pas non
+  plus un hook git : les deux sont des outils d'installation, appelés de la
+  même façon. Pas de nouveau répertoire pour un fichier.
+- Second argument facultatif pour tirer depuis un dépôt local au lieu
+  d'`origin` : le remote n'est pas toujours joignable, et il peut être en
+  retard sur la référence locale.
+- Les règles à ajouter passent par `REGLES_EN_PLUS` plutôt que par un
+  `cp rules/*.md` : une règle chargée pour rien coûte du contexte à chaque
+  session.
+
+**Fichiers principaux modifiés :**
+- `hooks/maj-standards` (nouveau), `README.md`.
+
+**Vérifié :**
+- Banc jetable reproduisant la structure d'un dépôt consommateur
+  (sous-module épinglé sur un commit ancien, `.claude/rules/`, `.githooks/`) :
+  le pointeur avance, seules les règles présentes sont recopiées,
+  `REGLES_EN_PLUS` en ajoute une, le garde-fou est vérifié actif.
+- Appel sans argument depuis le dépôt projet : la racine est bien déduite de
+  l'emplacement du script.
+
+**Points de vigilance pour la suite :**
+- **Amorçage.** Un dépôt dont le sous-module précède ce commit n'a pas encore
+  le script : la première mise à jour s'appelle depuis le dépôt de référence
+  (`bash /chemin/vers/standards-code/hooks/maj-standards /chemin/du/projet`).
+  Les suivantes peuvent passer par la copie du sous-module.
+- Le script suppose la branche `main` côté référence ; un dépôt qui voudrait
+  suivre `develop` devra passer par autre chose.
+- `verifier-installation` part du répertoire courant (`git rev-parse
+  --show-toplevel`), pas d'un argument : lancé tel quel depuis le dépôt de
+  référence, il contrôlait `standards-code` au lieu du projet, et annonçait
+  un garde-fou actif sans rapport. Corrigé par un sous-shell `cd "$PROJET"`.
+  Le banc de test ne l'avait pas vu, le répertoire courant y étant justement
+  le projet.
