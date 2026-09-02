@@ -195,11 +195,6 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
 
 ## Ce qui ne doit jamais être commité
 
-Le `.gitignore` est écrit à la création du dépôt, pas après le premier incident :
-un fichier déjà suivi continue de l'être quand on l'ajoute au `.gitignore`, et
-un secret déjà commité reste dans l'historique même après suppression — il est à
-considérer comme divulgué, donc à révoquer.
-
 - Données réelles : exports, fichiers clients, adresses, noms de personnes,
   configuration pointant vers un partage réel. Seuls les jeux d'essai
   synthétiques sont légitimes dans le dépôt.
@@ -207,3 +202,29 @@ considérer comme divulgué, donc à révoquer.
 - Artefacts régénérables : rapports de couverture, dossiers de build,
   dépendances installées.
 - Avant tout `git add` large (`git add .`), vérifier `git status`.
+
+### Le `.gitignore`
+
+Écrit à la création du dépôt, pas après le premier incident : un fichier déjà
+suivi continue de l'être quand on l'ajoute au `.gitignore`, et un secret déjà
+commité reste dans l'historique même après suppression — il est à considérer
+comme divulgué, donc à révoquer.
+
+- Versionné, un par dépôt, organisé par catégories : environnement (`.venv/`),
+  artefacts régénérables (`__pycache__/`, `dist/`, `build/`, couverture),
+  secrets (`.env`, `secrets.toml`, `.streamlit/secrets.toml` — le
+  `.env.example`, lui, est versionné), données et modèles volumineux, journaux.
+- **Les fichiers de verrou ne s'ignorent jamais** : `uv.lock`,
+  `package-lock.json` sont versionnés. Beaucoup de `.gitignore` génériques les
+  excluent, et une CI qui installe sans verrou ne teste plus la même chose que
+  le poste de développement.
+- Ce qui tient au poste ou à l'éditeur (`.idea/`, `.DS_Store`, fichiers de swap)
+  va dans l'ignore global de l'utilisateur, pas dans le `.gitignore` du dépôt,
+  qui ne décrit que le projet.
+- Un fichier déjà suivi continue de l'être : `git rm --cached <fichier>` pour
+  l'en sortir, dans un commit à part.
+- Ignorer un **répertoire** empêche de ré-inclure son contenu par `!` : git
+  n'entre pas dans un répertoire exclu. Pour garder un fichier d'un dossier
+  ignoré, exclure les fichiers (`dossier/*`) plutôt que le dossier.
+- Doute sur un fichier absent de `git status` : `git check-ignore -v <fichier>`
+  dit quelle ligne l'ignore, et `git status --ignored` montre ce qui est masqué.
