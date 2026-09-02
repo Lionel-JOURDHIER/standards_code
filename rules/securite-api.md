@@ -67,12 +67,19 @@ le payload — ni mot de passe, ni donnée personnelle, ni secret métier.
 - Vérifier explicitement `audience=` et `issuer=`. Un claim non passé en
   paramètre n'est **pas** vérifié, même s'il est présent dans le token — c'est
   le piège le plus courant.
-- Claims obligatoires déclarés : `options={"require": ["exp", "iat", "sub"]}`.
+- Claims obligatoires déclarés, `aud`/`iss`/`nbf` inclus dès que le projet les
+  émet — les déclarer requis sans aussi les vérifier via `audience=`/`issuer=`
+  ne sert à rien, et les vérifier sans les rendre requis laisse passer un
+  token qui les omet purement et simplement :
+  `options={"require": ["exp", "iat", "nbf", "iss", "aud", "sub"]}`.
 - Signature asymétrique (RS256) : la clé de vérification est publique, donc
   connue d'un attaquant. Sans épinglage, il forge un HS256 en utilisant cette
   clé publique comme secret HMAC.
 - Ne jamais décoder avec `verify_signature: False` en dehors d'un outil de
   diagnostic explicitement nommé comme tel.
+- Le paquet à installer est `pyjwt`, l'import reste `import jwt` — un
+  `ModuleNotFoundError: jwt` vient presque toujours d'un `pip install jwt`
+  (mauvais paquet) au lieu de `pyjwt`.
 
 ## Sessions : access + refresh
 
@@ -83,6 +90,13 @@ le payload — ni mot de passe, ni donnée personnelle, ni secret métier.
   `username`/`password` posté directement à l'API) enseigne justement le grant
   mot de passe — à réserver à un script interne au dépôt (tests, outillage
   d'administration), jamais à un client tiers ou une application publique.
+- `OAuth2PasswordRequestForm` (FastAPI) lit `username`/`password` depuis un
+  formulaire, pas du JSON : dépend de `python-multipart`, absent par défaut.
+  Un `422` sur `/token` sans autre message vient presque toujours de là.
+- Service à service, sans utilisateur humain (un agent interne qui appelle une
+  autre API du même système) : grant **Client Credentials**, pas Password
+  Grant ni Authorization Code — il n'y a personne à qui déléguer un
+  consentement.
 - **Access court** (~15 min) et **refresh long** (~7 j), distingués par un claim
   `type`. Un refresh présenté à la place d'un access est refusé, et
   réciproquement.
@@ -104,7 +118,9 @@ le payload — ni mot de passe, ni donnée personnelle, ni secret métier.
 - **401 ≠ 403.** 401 : identité non prouvée. 403 : identité connue, droits
   insuffisants. La confusion des deux masque les vrais problèmes de droits.
 - Routes protégées par `Depends(get_current_user)` : sans jeton valide, la
-  fonction n'est jamais exécutée.
+  fonction n'est jamais exécutée. Le `401` levé porte l'en-tête
+  `headers={"WWW-Authenticate": "Bearer"}`, exigé par la spécification HTTP
+  pour ce code — pas décoratif, un client standard s'y attend.
 - Contrôle de rôle par **dépendances chaînées** (`require_admin` dépend de
   `get_current_user`), pas par un `if` en début de fonction : le contrôle se voit
   dans la signature et ne peut pas être oublié dans une nouvelle route.
@@ -127,6 +143,9 @@ Générer la clé avec `secrets.token_urlsafe(32)`, jamais à la main.
 
 - **Rate limiting** sur `/token` (`slowapi`, par IP) : c'est la seule défense
   contre le forçage de mots de passe. `/refresh` mérite le même traitement.
+  La route décorée par `@limiter.limit(...)` doit déclarer `request: Request`
+  parmi ses paramètres — sans lui, `slowapi` échoue à l'exécution, pas au
+  démarrage.
 - **CORS restreint** aux origines réellement attendues. `allow_origins=["*"]`
   avec `allow_credentials=True` est refusé par la spécification et par les
   navigateurs — la combinaison ne « marche » jamais, elle échoue silencieusement.
