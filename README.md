@@ -16,6 +16,7 @@ rules/bdd.md             idem db/, repositories/, migrations/, alembic/
 rules/securite-api.md    idem src/api/, auth.py, security.py
 rules/cicd.md            idem .gitea/workflows/
 rules/http.md            idem clients/, integrations/ — appels HTTP sortants
+rules/documentation.md   idem docs/, conf.py, .rst, README.md — Sphinx
 rules/workflow-session.md déroulé d'une session, chargé toujours
 modeles/modele-CLAUDE.md à copier en CLAUDE.md et remplir dans un nouveau dépôt
 modeles/FICHE-MODELE.md  une par modèle promu en production
@@ -100,7 +101,7 @@ bash .claude/standards/hooks/verifier-installation
 ```
 
 La boucle ne rafraîchit que les règles **déjà présentes** dans le dépôt. Un
-`cp rules/*.md` déverserait les onze règles dans tous les projets, y compris
+`cp rules/*.md` déverserait les douze règles dans tous les projets, y compris
 celles qui n'y servent à rien.
 
 Le vérificateur signale une copie du hook qui aurait dérivé de la référence.
