@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+#
+# Met à jour le sous-module .claude/standards d'un dépôt et rafraîchit les
+# copies de règles déjà présentes. Remplace le « git pull » : après une
+# réécriture d'historique côté standards-code, l'ancien commit n'est plus un
+# ancêtre du nouveau et l'avance rapide est impossible.
+#
+#   bash .claude/standards/hooks/maj-standards [projet] [source]
+#
+# projet : racine du dépôt à mettre à jour. Par défaut, celle déduite de
+#          l'emplacement de ce script (.claude/standards/hooks/..).
+# source : « origin » (défaut), ou un chemin local vers un dépôt
+#          standards-code de référence — utile quand le remote n'est pas
+#          joignable, ou pas encore à jour.
+#
+# Les règles à ajouter en plus de celles déjà présentes se passent par
+# REGLES_EN_PLUS, séparées par des espaces :
+#
+#   REGLES_EN_PLUS=workflow-session.md bash .../hooks/maj-standards
+#
+set -euo pipefail
+
+PROJET="${1:-$(cd "$(dirname "$0")/../../.." && pwd)}"
+SOURCE="${2:-origin}"
+BRANCHE="main"
+SM="$PROJET/.claude/standards"
+
+[ -d "$SM/.git" ] || [ -f "$SM/.git" ] || {
+  echo "Pas de sous-module dans $SM" >&2; exit 1; }
+[ -d "$PROJET/.claude/rules" ] || {
+  echo "Pas de $PROJET/.claude/rules — le dépôt n'est pas installé" >&2; exit 1; }
+
+echo "== avant"
+git -C "$PROJET" submodule status .claude/standards
+
+# 1. Récupérer la nouvelle référence.
+if [ "$SOURCE" = "origin" ]; then
+  git -C "$SM" fetch origin "$BRANCHE"
+  CIBLE="origin/$BRANCHE"
+else
+  git -C "$SM" fetch "$(realpath "$SOURCE")" "$BRANCHE:refs/remotes/reference/$BRANCHE" --force
+  CIBLE="refs/remotes/reference/$BRANCHE"
+fi
+
+# 2. Se placer dessus. reset --hard et non pull : après une réécriture
+#    d'historique, l'ancien commit n'est plus un ancêtre du nouveau.
+git -C "$SM" checkout -q -B "$BRANCHE" "$CIBLE"
+git -C "$SM" reset -q --hard "$CIBLE"
+
+echo "== après"
+git -C "$SM" log --oneline -1
+git -C "$SM" status --porcelain | sed 's/^/  résidu: /'
+
+# 3. Rafraîchir les seules règles déjà présentes, plus celles demandées.
+for r in "$PROJET"/.claude/rules/*.md ${REGLES_EN_PLUS:-}; do
+  nom="$(basename "$r")"
+  src="$SM/rules/$nom"
+  [ -f "$src" ] || { echo "  ignorée (absente de la référence) : $nom"; continue; }
+  cp "$src" "$PROJET/.claude/rules/$nom"
+  echo "  règle à jour : $nom"
+done
+
+# 4. Le garde-fou, et son contrôle — une installation ratée est silencieuse.
+#    Le vérificateur part du répertoire courant : il faut le lancer depuis le
+#    projet, sinon il contrôle le dépôt d'où l'on a tapé la commande.
+[ -d "$PROJET/.githooks" ] && cp "$SM/hooks/pre-commit" "$PROJET/.githooks/pre-commit"
+( cd "$PROJET" && bash "$SM/hooks/verifier-installation" )
+
+# 5. Ce qui reste à committer dans le dépôt projet.
+echo "== à committer"
+git -C "$PROJET" status --short .claude
