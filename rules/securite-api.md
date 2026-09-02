@@ -76,6 +76,13 @@ le payload — ni mot de passe, ni donnée personnelle, ni secret métier.
 
 ## Sessions : access + refresh
 
+- **Authorization Code + PKCE** plutôt que Resource Owner Password Grant pour
+  obtenir ces jetons : le client ne voit jamais le mot de passe de
+  l'utilisateur, seulement un code d'échange redirigé par le fournisseur
+  d'identité. Le tutoriel officiel FastAPI (`OAuth2PasswordRequestForm`, champ
+  `username`/`password` posté directement à l'API) enseigne justement le grant
+  mot de passe — à réserver à un script interne au dépôt (tests, outillage
+  d'administration), jamais à un client tiers ou une application publique.
 - **Access court** (~15 min) et **refresh long** (~7 j), distingués par un claim
   `type`. Un refresh présenté à la place d'un access est refusé, et
   réciproquement.
