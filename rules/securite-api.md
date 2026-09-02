@@ -139,6 +139,54 @@ if not SECRET_KEY:
 
 Générer la clé avec `secrets.token_urlsafe(32)`, jamais à la main.
 
+## Secrets applicatifs — HashiCorp Vault
+
+Même principe de fail-closed appliqué au gestionnaire de secrets lui-même :
+sans connexion à Vault, l'application refuse de démarrer plutôt que de se
+rabattre sur une valeur par défaut ou un secret laissé en dur.
+
+```python
+VAULT_ADDR = os.environ.get("VAULT_ADDR")
+VAULT_TOKEN = os.environ.get("VAULT_TOKEN")
+if not VAULT_ADDR or not VAULT_TOKEN:
+    raise RuntimeError("Configuration Vault manquante : refus de démarrer.")
+```
+
+- **Jamais de jeton en dur dans le code**, y compris un jeton racine — le
+  code reste agnostique et ne consomme que des variables d'environnement
+  injectées par l'infrastructure. `os.environ["VAULT_TOKEN"] = "hvs...."`
+  écrit dans le code est une facilité de développement local, jamais un
+  patron de production.
+- **AppRole pour l'authentification service à service** (M2M) : `role_id`
+  connu de l'application, `secret_id` à usage unique et de courte durée
+  (`secret_id_num_uses=1`, `secret_id_ttl="10m"`), restreint par CIDR
+  (`secret_id_bound_cidrs=[...]`), et attaché à une politique nommée pour ce
+  service précis (`token_policies=[...]`) — jamais la politique `default`.
+- **KV v2** : `cas_required=True` sur le moteur force le verrouillage
+  optimiste — une écriture qui ne connaît pas la version courante (ou passe
+  `cas=0` alors que le secret existe déjà) lève
+  `hvac.exceptions.InvalidRequest` plutôt que d'écraser silencieusement. Le
+  nom d'un chemin ou d'une clé n'est **jamais filtré par la politique lors
+  d'un `list`** : n'y encoder aucune information sensible (nom de client,
+  incident en cours).
+- **Un secret statique lu (KV) n'est pas révocable comme un secret
+  dynamique.** Révoquer le bail attaché à une lecture KV ne coupe rien à un
+  client qui a déjà récupéré la valeur — c'est une photocopie. Un secret
+  dynamique (identifiants de base générés à la demande) l'est vraiment :
+  Vault se connecte au système cible et supprime le compte. Ne pas compter
+  sur une « révocation » de secret statique sans rotation manuelle côté
+  système cible, suivie d'une réécriture dans Vault.
+- **Moteur Transit** (chiffrement en tant que service) comme alternative à
+  `cryptography.Fernet`/RSA (§ Chiffrement des données) quand Vault est déjà
+  le gestionnaire de secrets du projet : l'application envoie/reçoit du texte
+  encodé en base64 sans jamais manipuler de clé — le base64 est une exigence
+  de transport, pas une mesure de sécurité en soi.
+- **Response wrapping** pour la remise d'un secret une seule fois (mot de
+  passe initial d'un compte admin, par exemple) : `client.sys.wrap(...)`
+  produit un jeton cubbyhole à usage unique. Un deuxième `unwrap` qui échoue
+  n'est pas une erreur à ignorer — c'est un signal qu'un tiers a intercepté
+  et déjà consommé le jeton, à traiter comme un incident.
+
 ## Durcissement
 
 - **Rate limiting** sur `/token` (`slowapi`, par IP) : c'est la seule défense
