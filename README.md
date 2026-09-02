@@ -12,6 +12,7 @@ rules/javascript.md      idem .js / .mjs / .cjs / .html — code navigateur
 rules/nodejs.md          idem package.json, .mjs, server/ — code serveur
 rules/vba.md             idem .bas / .cls / .frm
 rules/ml.md              idem src/ml/
+rules/donnees.md         idem notebooks, data/, etl/, pipelines/ — pandas
 rules/bdd.md             idem db/, repositories/, migrations/, alembic/
 rules/securite-api.md    idem src/api/, auth.py, security.py
 rules/cicd.md            idem .gitea/workflows/
@@ -103,7 +104,7 @@ bash .claude/standards/hooks/verifier-installation
 ```
 
 La boucle ne rafraîchit que les règles **déjà présentes** dans le dépôt. Un
-`cp rules/*.md` déverserait les douze règles dans tous les projets, y compris
+`cp rules/*.md` déverserait les treize règles dans tous les projets, y compris
 celles qui n'y servent à rien.
 
 Le vérificateur signale une copie du hook qui aurait dérivé de la référence.
