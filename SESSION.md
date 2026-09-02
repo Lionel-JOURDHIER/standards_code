@@ -33,8 +33,8 @@ combler les manques « au lieu le plus logique ».
 | 18 | Sécurité en Python | fait |
 | 19 | hash / cryptage | fait |
 | 20 | Sécuriser une API FastAPI | fait |
-| **21** | **Vault 1 & 2** | **à faire — reprendre ici** |
-| 22 | Streamlit | à faire |
+| 21 | Vault 1 & 2 | fait |
+| **22** | **Streamlit** | **à faire — reprendre ici** |
 | 23 | Selenium | à faire |
 | 24 | Redmail | à faire |
 | 25 | Workflow I | à faire |
@@ -344,6 +344,60 @@ règle du dépôt suit la lecture la plus prudente plutôt que celle du support.
 
 Pas de nouveau fichier de règle — quatorze règles inchangé.
 
+Cours 21 (HashiCorp Vault, 2 parties, 968 lignes cumulées) traité. Première
+extension réelle du périmètre : aucun `rules/*.md` ne mentionnait Vault avant
+ce cours, seul le `CLAUDE.md` racine du dossier de formation en parlait (§
+Secrets, une phrase). Analyse déléguée à un agent pour digérer les deux
+parties (policies, AppRole, KV v2, secrets dynamiques, Transit, response
+wrapping, seal/unseal, réplication...) et distinguer ce qui relève du code
+applicatif (`hvac`, patrons Python) de ce qui relève de l'exploitation pure
+(installation du serveur, seal/unseal, HSM/FIPS, réplication — écarté du
+même geste que Kafka au cours 16). Nouvelle section « Secrets applicatifs —
+HashiCorp Vault » dans `rules/securite-api.md`, juste après § Configuration :
+fail-closed (commit `feat : nouvelle section Secrets applicatifs —
+HashiCorp Vault dans securite-api.md`, fusionné dans `develop`) :
+- Même patron fail-closed que `SECRET_KEY`, appliqué à `VAULT_ADDR`/
+  `VAULT_TOKEN` : sans connexion, l'application refuse de démarrer.
+- Jamais de jeton en dur dans le code, y compris un jeton racine — le
+  support montre lui-même l'anti-patron (`os.environ["VAULT_TOKEN"] =
+  "hvs...."`) comme une facilité de développement local explicitement
+  écartée en production.
+- AppRole pour le M2M avec les contraintes concrètes du support :
+  `secret_id` à usage unique, TTL court, restriction CIDR, politique dédiée
+  au service — jamais `default`.
+- KV v2 : `cas_required=True` et l'exception `hvac.exceptions.
+  InvalidRequest` sur une écriture qui écraserait une version plus récente
+  sans le savoir ; rappel que `list` n'est pas filtré par la politique, donc
+  aucune information sensible dans un nom de chemin ou de clé.
+- **Distinction secret statique/dynamique, absente de tout le corpus
+  jusqu'ici** : révoquer un bail attaché à une lecture KV ne coupe rien à un
+  client qui a déjà lu la valeur (« une photocopie »), contrairement à un
+  secret dynamique (identifiants générés à la demande) que Vault peut
+  vraiment couper à la source. C'est le point le plus susceptible d'être mal
+  supposé par quelqu'un qui découvre Vault.
+- Moteur Transit comme alternative au chiffrement applicatif
+  (`cryptography.Fernet`/RSA, déjà écrit) quand Vault est déjà en place —
+  renvoi croisé plutôt que duplication, base64 présenté pour ce qu'il est
+  (transport, pas sécurité).
+- Response wrapping pour la remise d'un secret une seule fois : un deuxième
+  `unwrap` qui échoue est un signal d'interception, pas une erreur à
+  ignorer.
+
+Non retenu, hors périmètre (pur ops/infra, jamais de surface en code
+applicatif Python) : installation et démarrage du serveur Vault, seal/
+unseal et partage de Shamir, HSM/PKCS#11/FIPS, choix du backend de stockage
+(Raft/externe/fichier/mémoire), write-ahead log et rollback manager internes
+à Vault, réplication de performance (Enterprise), configuration HCL de Vault
+Agent/Consul-Template, génération de CA PKI (posture équipe sécurité dans le
+support lui-même), modèle de politiques deny-by-default/chemin le plus
+spécifique (déjà énoncé dans le CLAUDE.md racine, écrire des politiques HCL
+n'est pas du code applicatif Python).
+
+Pas de nouveau fichier — le contenu tient dans une section de
+`rules/securite-api.md`, dont le périmètre (`src/api/**/*.py`, `**/auth.py`,
+`**/security.py`) couvre déjà exactement le code qui appellerait `hvac`.
+Quatorze règles inchangé.
+
 ### Décisions techniques prises pendant la revue
 
 - **loguru est obligatoire** (demande explicite, 2026-09-02). Ce n'est plus « un
@@ -426,6 +480,11 @@ Pas de nouveau fichier de règle — quatorze règles inchangé.
   `python-multipart`, grant Client Credentials pour le M2M ; § Autorisation :
   en-tête `WWW-Authenticate: Bearer` ; § Durcissement : `request: Request`
   requis par `slowapi`.
+- `rules/securite-api.md` (cours 21) — nouvelle section « Secrets
+  applicatifs — HashiCorp Vault » après § Configuration : fail-closed :
+  fail-closed `VAULT_ADDR`/`VAULT_TOKEN`, jamais de jeton en dur ni racine,
+  AppRole M2M, KV v2/CAS, distinction secret statique/dynamique, Transit,
+  response wrapping.
 
 ### Vérifié
 
@@ -471,14 +530,22 @@ Pas de nouveau fichier de règle — quatorze règles inchangé.
   du même kit que `rules/securite-api.md`), avec cinq gestes mécaniques/
   pièges concrets ajoutés (claims JWT complets, `python-multipart`, Client
   Credentials, `WWW-Authenticate`, `slowapi`/`Request`) — pas de nouveau
-  fichier. Cours 21 (Vault 1 & 2) sera la première extension réelle du
-  périmètre : `grep -rn -i vault rules/` ne retourne rien, seul le CLAUDE.md
-  racine du dossier de formation en parle (§ Secrets, HashiCorp Vault :
-  policies deny-by-default, AppRole pour le M2M, KV v2 avec `cas_required`,
-  jamais de token root en usage applicatif) — probablement une nouvelle
-  section dans `rules/securite-api.md` (voisine de § Configuration :
-  fail-closed, qui parle déjà de secrets et de refus de démarrage) plutôt
-  qu'un nouveau fichier, à confirmer à la lecture du support.
+  fichier. Cours 21 (Vault 1 & 2) traité : première extension réelle du
+  périmètre confirmée (`grep` ne retournait rien avant ce cours) — nouvelle
+  section dans `rules/securite-api.md`, voisine de § Configuration :
+  fail-closed comme anticipé, pas de nouveau fichier (le périmètre de
+  `securite-api.md` couvre déjà le code qui appellerait `hvac`). Cours 22
+  (Streamlit) sera vraisemblablement la même figure : `grep -rln -i
+  streamlit rules/ README.md modeles/` ne retourne rien non plus, seul le
+  CLAUDE.md racine en parle (§ Applications, multipage `pages/`,
+  `@st.cache_resource`, `st.session_state`, `st.rerun()`, `key=` unique en
+  boucle, secrets dans `.streamlit/secrets.toml`) — probablement une
+  nouvelle section, à trancher à la lecture entre `rules/securite-api.md`
+  (si le support insiste sur les secrets/l'auth Streamlit) et un nouveau
+  fichier dédié à l'UI/aux applications si le contenu déborde largement du
+  périmètre sécurité (widgets, mise en page, cache) — Streamlit n'a pas la
+  même proximité avec le contenu déjà présent que Vault avec § Configuration
+  fail-closed.
 - Divergence assumée ajoutée par le cours 11 : le support montre un accès
   `psycopg2` + `register_vector(conn)` direct ; le dépôt impose le type
   `pgvector.sqlalchemy.Vector(N)` via `mapped_column`, cohérent avec le style
