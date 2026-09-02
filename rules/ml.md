@@ -15,6 +15,25 @@ environnement. Les règles ci-dessous existent pour qu'un résultat soit
 reproductible et qu'une dégradation soit détectable — pas pour ajouter de la
 cérémonie.
 
+## Framework : PyTorch ou Keras
+
+Le choix dépend du contexte, pas d'une préférence. Les deux embarquent CUDA et
+alourdissent l'environnement : un seul des deux par dépôt de modèle.
+
+| Contexte | Framework |
+|---|---|
+| Recherche, prototypage, architecture non standard, débogage fin | **PyTorch** |
+| Application de production, délai de mise sur le marché, écosystème de déploiement mature (TFLite, TF Serving) | **Keras / TensorFlow** |
+
+- PyTorch : le device est explicite (`torch.device(...)`, puis `.to(device)`
+  sur le modèle **et** sur chaque batch dans la boucle). L'oubli sur un batch
+  ne lève pas d'erreur : le calcul continue sur CPU en silence, ou plante à la
+  première opération qui mélange un tenseur CPU et un tenseur GPU.
+- Keras/TensorFlow réserve tout le GPU par défaut au démarrage. Sur une
+  machine partagée, limiter la croissance mémoire
+  (`tf.config.experimental.set_memory_growth(gpu, True)`) avant toute autre
+  opération TensorFlow.
+
 ## Reproductibilité : quatre empreintes par run
 
 Tout entraînement loggue le commit git, la version du dataset, la configuration
@@ -39,6 +58,11 @@ complète et la graine aléatoire. Un run qui n'a pas les quatre est un run perd
   et d'autre et donne une métrique fausse de 10 à 30 points.
 - Données horodatées : découpage temporel, entraînement sur le passé,
   évaluation sur le futur.
+- Fenêtre glissante pour un modèle séquentiel (RNN, séries temporelles) :
+  chaque `X` s'arrête strictement avant l'instant que `y` doit prédire. Une
+  fenêtre qui inclut ne serait-ce qu'un point contemporain ou postérieur à `y`
+  fait « prédire le présent » — la métrique d'entraînement est excellente et
+  le modèle est inutilisable en production.
 - Validation du schéma en entrée de pipeline (colonnes, types, plages, taux de
   nuls, cardinalité). Un écart arrête le pipeline, il ne le dégrade pas
   silencieusement.
@@ -54,6 +78,11 @@ Avant de croire un résultat :
   ailleurs. C'est ce même objet, sérialisé avec le modèle, qui règle le
   § Écart entraînement / service plus bas : un seul chemin de calcul, pas deux
   implémentations à maintenir en parallèle.
+- Un vectoriseur de texte (TF-IDF, `CountVectorizer`) suit la même règle :
+  vocabulaire et poids appris sur l'entraînement, appliqués tels quels au
+  reste. Un mot absent du vocabulaire d'entraînement est simplement ignoré à
+  l'inférence — ce n'est pas une raison de réentraîner le vectoriseur sur
+  l'ensemble du corpus.
 - Un rééquilibrage de classes (sur-échantillonnage, SMOTE, sous-échantillonnage)
   s'applique **après** le découpage, sur l'entraînement seul. Rééquilibrer
   avant de découper duplique des exemples des deux côtés de la frontière
@@ -142,6 +171,26 @@ ne s'appliquent pas telles quelles.
   dynamiquement : sinon une promotion change le comportement en production sans
   déploiement.
 - Le champion précédent reste déployable. Retour arrière en une commande.
+
+## Modèles pré-entraînés — Hugging Face
+
+Réutiliser un modèle publié (transfer learning) est le choix par défaut dès
+qu'un modèle couvre une tâche proche de celle visée : entraîner depuis zéro se
+justifie par un besoin réel (domaine trop spécifique, licence incompatible),
+pas par habitude. Geler le corps du modèle, n'entraîner que la tête ; ne
+dégeler des couches profondes (fine tuning) que si une mesure montre que ça
+sert.
+
+- Chargement épinglé à une révision précise (`revision="<commit ou tag>"`),
+  jamais la branche par défaut implicite : un modèle du Hub peut changer sous
+  le même nom, exactement la raison qui interdit déjà de charger un modèle par
+  un stage résolu dynamiquement (§ Registry et promotion ci-dessus).
+- Licence du modèle et du dataset vérifiée avant réutilisation, en particulier
+  en usage commercial ou sur des données de production : toutes les licences du
+  Hub ne sont pas permissives, certaines interdisent l'usage commercial ou
+  imposent une attribution.
+- Jeton Hugging Face en variable d'environnement, jamais en dur — même règle
+  que tout autre secret (`rules/python.md` § Configuration).
 
 ## Portail qualité avant promotion
 
