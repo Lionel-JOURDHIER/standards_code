@@ -72,6 +72,10 @@ def test_code_marche_normalise(saisie, attendu):
   fait déjà la bibliothèque tierce ou le framework.
 - Un scénario de bout en bout sur le chemin critique, en plus des tests
   unitaires — pour une API, le flux d'authentification complet.
+- Une route FastAPI se teste par `TestClient`, qui appelle l'application en
+  mémoire sans ouvrir de port : assertions sur `response.status_code` **et** sur
+  `response.json()`. Vérifier le seul code de retour laisse passer une réponse
+  200 au corps vide.
 - Correction d'un défaut : **écrire d'abord le test qui échoue**, puis corriger.
   Sans lui, rien ne garantit que le défaut ne revienne pas, ni même qu'on ait
   compris lequel c'était.
