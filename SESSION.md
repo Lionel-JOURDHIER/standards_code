@@ -955,3 +955,155 @@ couvert au § Recherche d'hyperparamètres, MLflow logging déjà couvert au
 Travail réalisé sur `feature/ml-classiques`, commit `feat : modèles
 classiques scikit-learn (mise à l'échelle, ensemblistes, AutoML, Isolation
 Forest) dans ml.md`, fusionné `--no-ff` dans `develop`, branche supprimée.
+
+## [2026-09-02] — Audit de lisibilité des `.md` pour Claude
+
+**Branche :** `feature/audit-lisibilite-md`
+
+**Fait :**
+- Mécanisme de chargement des règles vérifié **dans le binaire Claude Code
+  2.1.84**, pas seulement d'après la documentation : la clé de frontmatter lue
+  est bien `paths` (nom interne `globs`), la comparaison se fait en sémantique
+  `.gitignore` sur le chemin relatif à la **racine du dépôt**, un `/**` final
+  est retiré avant comparaison, et un fichier de `.claude/rules/` sans `paths`
+  est chargé à chaque session. Le dépôt était donc correct sur le fond ; les
+  quatre autres colonnes du tableau ajouté au README ne se devinaient pas.
+- Sept défauts corrigés (détail ci-dessous), tous des cas où la consigne
+  se contredit ou n'est pas exécutable telle quelle par l'assistant.
+- Portées `paths` de `deploiement.md` élargies aux noms de fichiers réels
+  (`compose.yaml` de Compose v2, `Dockerfile.<service>`, `k8s/` imbriqué) et
+  débarrassées de leurs doublons `**/`, inutiles en sémantique `.gitignore`.
+
+**Décisions techniques :** (avec la raison, pas seulement le choix)
+- Sémantique de `paths` documentée dans le **README** et non dans chaque règle :
+  c'est de la connaissance de mainteneur, elle n'a pas à coûter du contexte à
+  chaque session. Seule `deploiement.md` en garde un rappel, parce que c'est le
+  fichier dont les motifs sont les plus faciles à re-casser.
+- `**/k8s/**` plutôt que quatre motifs `k8s/**/*.yaml` + `.yml` + compagnons
+  `**/` : couvre les manifestes quelle que soit l'extension et à toute
+  profondeur, en une ligne.
+- Doublons `**/` retirés de `deploiement.md` seulement, pas de `streamlit.md` :
+  là ils sont inoffensifs et le fichier n'avait pas de défaut à corriger — pas
+  de reformatage au détour d'un correctif (priorité 3 du socle).
+- Les trois consignes de `workflow-session.md` que l'assistant ne peut pas
+  exécuter (`/clear`, `/context`, changement de modèle) sont regroupées sous un
+  paragraphe qui dit explicitement à qui elles s'adressent, plutôt que
+  supprimées : elles restent vraies, c'est leur destinataire qui manquait.
+- `log_prints=True` conservé dans `deploiement.md`, mais rattaché à ce qu'il
+  fait réellement (récupérer la sortie standard du code tiers) : le supprimer
+  aurait retiré une information juste, le laisser tel quel autorisait un
+  `print()` de suivi que `python.md` interdit.
+
+**Fichiers principaux modifiés :**
+- `rules/ml.md` — commentaire de portée aligné sur le frontmatter réel
+  (notebooks + `conf/`, plus larges que `src/ml/`) ; renvois « ci-dessus » du
+  § Apprentissage non supervisé corrigés (Registry et Portail qualité sont plus
+  bas) ; § Modèles pré-entraînés ne prétend plus que le § Registry « interdit »
+  la résolution dynamique, alors qu'il recommande l'alias ; puce du cache
+  d'alias (9 lignes, une seule phrase) coupée en deux.
+- `rules/cicd.md` — puce « entraînement pas en CI » remontée de § Un échec doit
+  bloquer, où elle était orpheline après un paragraphe de conclusion, vers
+  § Contenu d'un workflow ; « écrire la réponse ici » remplacé par l'endroit
+  qui survit à une mise à jour du sous-module.
+- `rules/deploiement.md` — frontmatter `paths` ; `log_prints=True` séparé de
+  la puce `@flow`/`@task` et rattaché à `python.md` § Journalisation.
+- `rules/workflow-session.md` — § Pendant et étape 7 de § Fin de tâche.
+- `README.md` — nouvelle section « Comment le frontmatter `paths` est
+  réellement interprété ».
+
+**Vérifié :**
+- Motifs `paths` testés en sémantique réelle, par `git check-ignore` dans un
+  dépôt jetable : `Dockerfile.dev`, `docker/Dockerfile`, `compose.yaml`,
+  `deploy/k8s/api.yml` déclenchent bien `deploiement.md`, et `src/app.py` ne la
+  déclenche pas. Idem contrôles de non-régression sur `ml.md`, `streamlit.md`
+  et `bdd.md`, inchangés.
+- Renvois `rules/x.md` et `§ Section` revérifiés par script contre les en-têtes
+  réels : aucun renvoi mort. Blocs de code équilibrés, aucun saut de niveau de
+  titre, tout en UTF-8/LF.
+- Coût contexte mesuré : ~43 k jetons si les dix-sept règles étaient chargées
+  ensemble, 5 à 8 k pour un projet VBA, ~20 k pour un projet Python complet —
+  à comparer au seuil de 120 k que ce même fichier de règles fixe.
+- Non vérifié : rien n'a été exécuté dans un vrai dépôt consommateur, le
+  chargement effectif des règles élargies n'est donc constaté que par la
+  sémantique `.gitignore`, pas par une session réelle.
+
+**Points de vigilance pour la suite :**
+- `git config user.email` vaut `lio.jourdhier@gmail.com` sur ce poste, alors que
+  le socle exige l'adresse professionnelle. Tout l'historique existant est signé
+  ainsi ; à trancher (garder pour ce dépôt, ou corriger et l'assumer pour les
+  commits futurs).
+- `**/tools/**/*.py` (`agents-ia.md`, 3,3 k jetons) reste la portée la plus
+  large du dépôt : `tools/` est un nom de dossier générique, la règle se
+  chargera sur des projets sans le moindre agent. À resserrer si le cas se
+  présente vraiment.
+- Les trois points « à vérifier sur notre instance » de `cicd.md` sont toujours
+  sans réponse. Ils bornent la forme des workflows tant qu'ils le restent.
+
+## [2026-09-02] — Portée `tools/` resserrée dans agents-ia.md
+
+**Branche :** `feature/portee-tools-agents-ia`
+
+**Fait :**
+- `**/tools/**/*.py` retiré du frontmatter d'`agents-ia.md`, remplacé par
+  `**/tools.py` et `**/*_tools.py`. La règle (3,3 k jetons) ne se charge plus
+  sur le `tools/` d'utilitaires que beaucoup de dépôts possèdent sans avoir le
+  moindre agent.
+- Ligne correspondante du tableau du README mise à jour.
+
+**Décisions techniques :**
+- Aucun motif ne peut exprimer « un `tools/` voisin d'`agents/` » en sémantique
+  `.gitignore`. Les outils rangés sous `agents/`, `chains/`, `graphs/` ou `rag/`
+  restaient de toute façon couverts par les motifs de répertoire existants : le
+  seul cas réellement perdu est un `tools/` de premier niveau contenant des
+  `@tool`, c'est-à-dire exactement le cas ambigu. Il se récupère en ajoutant le
+  chemin dans la copie locale, comme le font déjà `http.md` et `nodejs.md`.
+- Faux positif résiduel assumé et écrit dans l'en-tête : un `excel_tools.py`
+  d'utilitaires déclenche encore. Un fichier, plus une arborescence entière.
+
+**Fichiers principaux modifiés :**
+- `rules/agents-ia.md` — frontmatter `paths` et en-tête (raison du resserrement).
+- `README.md` — description de la portée d'`agents-ia.md`.
+
+**Vérifié :**
+- Douze cas passés par `git check-ignore` dans un dépôt jetable :
+  `src/agents/tools/recherche.py`, `src/chains/tools/sql.py`, `app/tools.py`,
+  `src/ia/recherche_tools.py`, `mcp_server_parc.py`, `src/devis_agent.py`
+  déclenchent ; `tools/export_xlsx.py`, `scripts/tools/nettoyage.py` et
+  `src/api/main.py` ne déclenchent plus.
+- Non vérifié : aucun dépôt consommateur réel n'a été ouvert pour constater le
+  chargement en session.
+
+**Points de vigilance pour la suite :**
+- Reste de l'audit de lisibilité : l'adresse de commit (gmail au lieu de
+  l'adresse professionnelle) et les trois points « à vérifier sur notre
+  instance » de `cicd.md`, toujours sans réponse.
+
+## [2026-09-02] — Adresse de commit corrigée
+
+**Branche :** `develop` (réglage de poste, aucun fichier du dépôt modifié à part
+ce résumé)
+
+**Fait :**
+- `git config --global user.email` passé de `lio.jourdhier@gmail.com` à
+  `l'adresse professionnelle`, conformément au socle (§ Commits, « l'auteur du
+  commit doit être identifiable […] avec l'adresse professionnelle »).
+  Sauvegarde de l'ancien fichier dans `~/.gitconfig.bak-20260902`.
+
+**Décisions techniques :**
+- Réglage **global** et non local au dépôt : l'adresse était déjà dans
+  `~/.gitconfig`, et le socle parle d'un réglage de poste. Tous les dépôts de la
+  machine sont donc concernés, y compris les dépôts personnels — c'est
+  l'intention de la règle, et le changement se défait par une commande.
+- **Historique existant non réécrit.** Tous les commits antérieurs restent
+  signés avec l'ancienne adresse : le socle interdit de réécrire l'historique
+  sans demande explicite, et ici la réécriture n'apporterait rien qu'une
+  divergence avec les copies déjà distribuées.
+
+**Vérifié :**
+- Commit d'essai dans un dépôt jetable : auteur
+  `Lionel JOURDHIER <l'adresse professionnelle>`. `user.name` inchangé.
+
+**Points de vigilance pour la suite :**
+- Il reste, de l'audit de lisibilité, les trois points « à vérifier sur notre
+  instance » de `cicd.md` (expressions autres qu'`always()`, `actions/cache`,
+  lecture de `.github/workflows`), toujours sans réponse.

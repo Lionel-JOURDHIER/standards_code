@@ -16,7 +16,7 @@ rules/donnees.md         idem notebooks, data/, etl/, pipelines/ — pandas
 rules/bdd.md             idem db/, repositories/, migrations/, alembic/
 rules/deploiement.md     idem Dockerfile, docker-compose*.yml, k8s/, prefect.yaml
 rules/securite-api.md    idem src/api/, auth.py, security.py — Vault inclus
-rules/agents-ia.md       idem chains/, agents/, graphs/, tools/, rag/, mcp_server*.py
+rules/agents-ia.md       idem chains/, agents/, graphs/, rag/, tools.py, mcp_server*.py
 rules/streamlit.md       idem app.py, Home.py, pages/, .streamlit/
 rules/selenium.md        idem scraping/, scraper*.py, *_scraper.py
 rules/cicd.md            idem .gitea/workflows/
@@ -125,6 +125,24 @@ déclencheur finit ignorée.
 Avant d'ajouter : est-ce qu'un linter ou le hook peut le vérifier ? Si oui, ça
 n'a rien à faire dans un fichier de règles. Un CLAUDE.md est du contexte, pas
 une configuration appliquée ; seul un hook s'exécute quoi qu'il arrive.
+
+## Comment le frontmatter `paths` est réellement interprété
+
+Vérifié dans Claude Code 2.1.84, parce que trois de ces règles ne se devinent
+pas et qu'un motif qui ne matche rien ne produit aucune erreur :
+
+| Ce qu'on écrit | Ce qui se passe |
+|---|---|
+| pas de `paths` du tout | la règle est chargée **à chaque session** (c'est le cas de `workflow-session.md`) |
+| `paths` présent | la règle n'est chargée que quand un fichier correspondant est lu ou écrit |
+| motif **sans** barre oblique (`Dockerfile*`, `README.md`) | s'applique à **tous les niveaux** du dépôt ; un `**/` en plus est redondant |
+| motif **avec** barre oblique (`k8s/**/*.yaml`, `pages/**/*.py`) | ancré à la **racine** du dépôt ; il faut un compagnon `**/…` pour les sous-dossiers |
+| `/**` en fin de motif | retiré avant comparaison : `alembic/**` devient `alembic`, donc plus ancré du tout |
+
+La comparaison se fait en sémantique `.gitignore`, sur le chemin du fichier
+déclencheur relatif à la racine du dépôt. Les commentaires HTML (`<!-- … -->`)
+sont retirés avant injection dans le contexte : ils ne coûtent rien et servent
+de notes au mainteneur.
 
 ## Ce qui ne va pas dans ce dépôt
 

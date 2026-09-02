@@ -1,12 +1,12 @@
 ---
 paths:
-  - "Dockerfile"
-  - "**/Dockerfile"
+  - "Dockerfile*"
   - "docker-compose*.yml"
-  - "**/docker-compose*.yml"
-  - "k8s/**/*.yaml"
+  - "docker-compose*.yaml"
+  - "compose.yml"
+  - "compose.yaml"
+  - "**/k8s/**"
   - "prefect.yaml"
-  - "**/prefect.yaml"
 ---
 
 # Conteneurs et orchestration — Docker, Compose, Kubernetes
@@ -16,7 +16,13 @@ paths:
      couvre ce qui se passe une fois l'image construite : composition locale
      (Compose), orchestration de pipeline (Prefect), traitement asynchrone
      (Celery), passage à l'échelle (Kubernetes). Le cycle de vie du modèle
-     lui-même reste dans rules/ml.md — ce fichier ne fait que le servir. -->
+     lui-même reste dans rules/ml.md — ce fichier ne fait que le servir.
+
+     Portée : un motif sans barre oblique s'applique déjà à tous les niveaux du
+     dépôt, donc "Dockerfile*" couvre Dockerfile.dev comme docker/Dockerfile et
+     un "**/" en plus serait redondant. "compose.yaml" est le nom par défaut de
+     Compose v2, "**/k8s/**" attrape les manifestes en .yaml comme en .yml, y
+     compris sous deploy/k8s/. -->
 
 Un conteneur garantit qu'un service tourne à l'identique partout. Ce qui suit
 ne porte pas sur cette garantie mais sur ce qui l'entoure : combien
@@ -139,9 +145,13 @@ d'instances, quelles données survivent à un arrêt, qui peut parler à qui.
 
 ## Orchestration de pipeline — Prefect
 
-- `@flow` marque le point d'entrée (nom explicite, `log_prints=True` pour que
-  les `print()` des tâches remontent dans les logs Prefect plutôt que de se
-  perdre) ; `@task` marque une étape unitaire.
+- `@flow` marque le point d'entrée (nom explicite), `@task` marque une étape
+  unitaire.
+- `log_prints=True` sur le `@flow` **ne lève pas l'interdiction de `print()`**
+  de `rules/python.md` § Journalisation : notre code journalise par loguru,
+  l'option ne sert qu'à récupérer ce qu'écrit sur la sortie standard le code
+  qu'on n'a pas écrit (bibliothèque tierce, script appelé), qui se perdrait
+  sinon. Elle n'autorise pas à écrire un `print()` de suivi dans une `@task`.
 - `retries` et `retry_delay_seconds` sur toute tâche qui dépend d'un réseau ou
   d'un service externe (appel API, scraping) — pas sur un calcul pur, qui
   échouera de la même façon à chaque tentative. `cache_key_fn` évite de

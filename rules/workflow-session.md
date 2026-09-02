@@ -13,17 +13,23 @@
 ## Pendant
 
 - Une tâche à la fois, sur une branche `feature/*` créée depuis `develop`.
-- Ne pas changer de modèle en cours de session : le cache de prompt est invalidé
-  et la session redevient coûteuse.
 - Texte uniquement dans le contexte. Un PDF ou une capture d'écran passent par
   une extraction texte préalable.
-- Surveiller `/context`, qui visualise la fenêtre courante — `/usage` et son
-  alias `/cost` mesurent le forfait, pas le contexte. Au-delà de 120 k jetons :
-  finir le point en cours, puis `/clear`. Si la tâche n'est pas terminée, la
-  découper et committer ce qui est fait plutôt que de continuer dans un contexte
-  saturé.
-- Préférer `/clear` avec un `SESSION.md` à jour plutôt que la compaction
-  automatique : le résumé écrit est relu tel quel à la session suivante.
+
+Les trois points suivants ne sont pas exécutables par l'assistant : ce sont des
+gestes de l'utilisateur, que l'assistant **demande** au bon moment plutôt que
+d'annoncer les avoir faits.
+
+- `/clear` avec un `SESSION.md` à jour, plutôt que la compaction automatique :
+  le résumé écrit est relu tel quel à la session suivante. L'assistant le
+  propose dès que la tâche est close (étape 7 ci-dessous).
+- `/context` visualise la fenêtre courante — `/usage` et son alias `/cost`
+  mesurent le forfait, pas le contexte. L'assistant ne voit ni l'un ni l'autre :
+  au-delà de 120 k jetons, c'est l'utilisateur qui arbitre. Si la tâche n'est pas
+  terminée, la découper et committer ce qui est fait plutôt que de continuer dans
+  un contexte saturé.
+- Ne pas changer de modèle en cours de session : le cache de prompt est invalidé
+  et la session redevient coûteuse.
 
 ## Fin de tâche, dans cet ordre
 
@@ -36,10 +42,11 @@
 5. `ARCHITECTURE.md` mis à jour si l'architecture a bougé.
 6. Commit sur la branche `feature/*`, fusion dans `develop` avec
    `git merge --no-ff`, suppression de la branche.
-7. `/clear`.
+7. L'assistant signale que la tâche est close et propose le `/clear` ; c'est
+   l'utilisateur qui le lance.
 
-Ne jamais faire `/clear` avant que les vérifications passent et que `SESSION.md`
-soit relu. Tout ce qui n'est pas écrit est perdu.
+Ne jamais proposer `/clear` avant que les vérifications passent et que
+`SESSION.md` soit relu. Tout ce qui n'est pas écrit est perdu.
 
 ## Format d'une entrée de SESSION.md
 
