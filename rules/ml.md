@@ -49,10 +49,37 @@ Une métrique inhabituellement bonne est un bug jusqu'à preuve du contraire.
 Avant de croire un résultat :
 
 - Normalisation, imputation et encodage ajustés sur l'entraînement seul, puis
-  appliqués au reste. Pas d'ajustement sur l'ensemble des données.
+  appliqués au reste — en pratique un `sklearn.pipeline.Pipeline` /
+  `ColumnTransformer` unique, `fit` sur l'entraînement et `transform` partout
+  ailleurs. C'est ce même objet, sérialisé avec le modèle, qui règle le
+  § Écart entraînement / service plus bas : un seul chemin de calcul, pas deux
+  implémentations à maintenir en parallèle.
+- Un rééquilibrage de classes (sur-échantillonnage, SMOTE, sous-échantillonnage)
+  s'applique **après** le découpage, sur l'entraînement seul. Rééquilibrer
+  avant de découper duplique des exemples des deux côtés de la frontière
+  train/test ; la validation et le test ne se rééquilibrent jamais, ils
+  mesurent la réalité, pas un jeu artificiel.
 - Aucune variable calculée à partir d'une information indisponible au moment de
   l'inférence.
 - Pas de doublons ni d'objets identiques répartis entre entraînement et test.
+
+## Recherche d'hyperparamètres
+
+Une grille d'hyperparamètres (`GridSearchCV` ou équivalent) ne porte que sur
+l'entraînement : ses plis de validation croisée se découpent **à l'intérieur**
+de la partition d'entraînement, jamais sur le test gelé, qui reste réservé à la
+mesure finale.
+
+- Une recherche répétée sur le même ensemble de validation finit par le
+  surapprendre : la meilleure combinaison devient la meilleure *pour cet
+  échantillon-là*, pas en général. Une validation croisée imbriquée (une
+  boucle externe pour l'estimation, une boucle interne pour la recherche) est
+  le correctif quand le nombre d'essais est élevé.
+- Le nombre de plis et la métrique d'optimisation sont écrits dans la
+  configuration versionnée, pas déduits au cas par cas.
+- La grille est un choix motivé (plage réaliste autour d'un ordre de grandeur
+  connu), pas un balayage large « pour voir » : chaque combinaison coûte un
+  entraînement complet.
 
 ## Baseline
 
@@ -72,6 +99,29 @@ Avant de croire un résultat :
   un segment.
 - Pour départager deux modèles proches, plusieurs graines et l'écart-type. Un
   écart de trois dixièmes de point sur un run unique n'est pas un résultat.
+- Classification : le choix entre précision et rappel suit le coût respectif
+  d'un faux positif et d'un faux négatif (§ Humain dans la boucle), pas une
+  préférence par défaut — un dépistage médical et un détecteur de fumée n'ont
+  pas la même erreur à éviter en priorité, sur des matrices de confusion
+  pourtant comparables.
+- Régression : MAE si toutes les erreurs comptent au même poids, MSE quand une
+  grosse erreur coûte disproportionnellement plus qu'une petite (elle est
+  élevée au carré avant d'être moyennée). `R²` compare des modèles entre eux,
+  ce n'est pas une note de qualité absolue.
+
+## Apprentissage non supervisé
+
+Le clustering et la réduction de dimension n'ont pas de vérité terrain : les
+sections Baseline, Registry et promotion, et Portail qualité ci-dessus,
+écrites pour un modèle supervisé avec un champion à battre sur un test gelé,
+ne s'appliquent pas telles quelles.
+
+- Le nombre de clusters (coude, silhouette) est **indicatif**, pas une preuve :
+  la validation finale est un avis métier sur des clusters relus à la main, pas
+  un score qu'on maximise.
+- Loggé dans MLflow comme le reste (paramètres, graine, artefacts de
+  visualisation), pour rester reproductible même sans métrique de décision
+  unique à comparer d'un run à l'autre.
 
 ## MLflow
 
