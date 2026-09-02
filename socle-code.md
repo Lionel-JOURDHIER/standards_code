@@ -136,7 +136,9 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
   sa machine. Pas de branche `release/*` tant que le versionnement n'est pas
   formalisé.
 - **`develop`** : branche d'intégration, branche par défaut de tout nouveau
-  travail.
+  travail. La mettre à jour (`git pull --ff-only`) **avant** d'en tirer une
+  branche : une `feature/*` partie d'un `develop` en retard fusionne en
+  conflits qui n'ont rien à voir avec la tâche.
 - **`feature/<nom-kebab-case>`** : une branche par tâche, créée depuis
   `develop`, fusionnée dans `develop` par `git merge --no-ff`, puis supprimée.
   Pas de rebase, pas de squash : les commits restent tels qu'ils ont été écrits.
@@ -146,6 +148,14 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
 - **`hotfix/<nom-kebab-case>`** : correction urgente créée depuis `main`,
   fusionnée dans `main` **et** dans `develop`.
 - Ne jamais committer directement sur `main`.
+- Une branche vit le temps d'une tâche. Au-delà de quelques jours, elle diverge
+  plus vite qu'elle n'avance : découper la tâche et fusionner ce qui est fini.
+- Une seule personne décide des fusions vers `main`. Côté assistant, cela se
+  traduit par l'interdiction ci-dessous : la fusion dans `main` se demande, elle
+  ne se prend pas.
+- **Un commit = une unité cohérente**, c'est-à-dire une fonctionnalité, une
+  correction ou une réécriture — pas une journée de travail, pas un fichier.
+  C'est ce qui rend un `git revert` possible et un historique lisible.
 - Message de commit au format `type : résumé`, `type` pris dans cette liste :
 
   | Type | Pour |
@@ -172,11 +182,23 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
 - Ne jamais pousser (`git push`), forcer un push, fusionner dans `main` ni
   réécrire l'historique sans demande explicite. Le commit automatique ne couvre
   que les commits locaux et la fusion locale dans `develop`.
+- L'auteur du commit doit être identifiable : `git config user.name` et
+  `user.email` renseignés sur le poste, avec l'adresse professionnelle. Un
+  historique signé « root@machine » ne dit plus qui a écrit quoi.
+- Un commit écrit par l'assistant porte la ligne de fin
+  `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`, séparée du corps par
+  une ligne vide. Uniformément : un historique où seuls certains la portent ne
+  distingue plus rien.
 - Avant de committer, lancer les vérifications déclarées dans le `CLAUDE.md` du
   dépôt. Ce qui n'est pas couvert par un outil automatique et a été vérifié à la
   main est écrit dans le message de commit.
 
 ## Ce qui ne doit jamais être commité
+
+Le `.gitignore` est écrit à la création du dépôt, pas après le premier incident :
+un fichier déjà suivi continue de l'être quand on l'ajoute au `.gitignore`, et
+un secret déjà commité reste dans l'historique même après suppression — il est à
+considérer comme divulgué, donc à révoquer.
 
 - Données réelles : exports, fichiers clients, adresses, noms de personnes,
   configuration pointant vers un partage réel. Seuls les jeux d'essai
