@@ -32,7 +32,7 @@ recréer sa clé au prochain passage, une connexion qui ne doit pas se rouvrir
   convention à réinventer avec des routes ou un fichier de config à part.
 - La logique métier (calcul, filtrage, chargement de données) reste dans des
   fonctions testables, importées par la page — pas écrite en ligne dans le
-  script de la page. `rules/tests-python.md` § Ce qu'on teste et ce qu'on ne
+  script de la page. `rules/tests-python.md` § Ce qu'on teste, et ce qu'on ne
   teste pas s'applique tel quel : la fonction se teste, le widget ne se teste
   pas.
 

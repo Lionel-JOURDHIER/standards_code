@@ -206,9 +206,12 @@ ne s'appliquent pas telles quelles.
   exécution précise, pour comparer ou reproduire une expérience — jamais pour
   servir en production. Seul `models:/<nom>@<alias>` ou `models:/<nom>/<n°>`
   (Model Registry) alimente un service.
-- Critères de promotion vérifiés et écrits dans la fiche modèle : bat le champion
-  en place sur le test gelé, tient le budget de latence, ne régresse sur aucune
-  tranche sensible.
+- Critères de promotion vérifiés et écrits dans la fiche modèle — une page par
+  modèle promu, à partir de `modeles/FICHE-MODELE.md` (données, résultats,
+  portail qualité, coût des erreurs, surveillance, retrait), versionnée à côté
+  du code et mise à jour à chaque nouvelle version : bat le champion en place
+  sur le test gelé, tient le budget de latence, ne régresse sur aucune tranche
+  sensible.
 - Un alias (`@production`, `@champion`) est préférable au numéro de version brut
   pour sa lisibilité, mais le service ne recharge pas le modèle à chaque appel :
   il vérifie, via `MlflowClient`, la version actuelle derrière l'alias
@@ -248,8 +251,8 @@ Evidently sépare les deux usages, pas interchangeables : un `Report` (preset
 diagnostic visuel pensé pour être regardé, pas pour décider tout seul. La porte
 qualité automatisée est un `TestSuite` : son résultat est binaire
 (succès/échec), exploitable sans intervention humaine dans un pipeline CI/CD
-ou une tâche d'orchestrateur (`rules/deploiement.md` § Orchestration —
-Prefect). Avant une promotion ou une mise en service, le pipeline compare le
+ou une tâche d'orchestrateur (`rules/deploiement.md` § Orchestration de
+pipeline — Prefect). Avant une promotion ou une mise en service, le pipeline compare le
 lot courant à la fenêtre de référence via un `TestSuite`, et lève une
 exception dès qu'un test échoue. Un rapport qu'on regarde après coup ne
 protège de rien.
