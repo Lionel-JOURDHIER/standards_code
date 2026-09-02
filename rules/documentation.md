@@ -61,11 +61,18 @@ porte une section **Documentation** qui donne, dans cet ordre :
    l'interface de Gitea sans rien construire.
 
 Le bloc à recopier est dans `.claude/standards/modeles/modele-README.md`,
-section Documentation : la commande de construction, puis un tableau donnant la
-commande d'ouverture par environnement — `start`, `explorer.exe`, `xdg-open`,
-`open`, ou un serveur local quand la machine n'a pas de navigateur. Sous WSL en
-particulier, `xdg-open` échoue faute d'environnement de bureau et c'est
-`explorer.exe` qui ouvre le navigateur Windows.
+section Documentation. La commande d'ouverture par défaut est portable :
+
+```bash
+uv run python -m webbrowser public/index.html
+```
+
+Elle délègue au navigateur déclaré du système, ce qui évite d'écrire une
+commande par plateforme. Les replis (`explorer.exe` sous WSL, `start`,
+`xdg-open`, `open`, ou `python -m http.server` sur un serveur sans navigateur)
+sont listés à la suite dans le modèle : sous WSL en particulier, il n'y a pas
+d'environnement de bureau et c'est `explorer.exe` qui ouvre le navigateur
+Windows.
 
 Le troisième point est ce qui garantit l'accessibilité : un lien relatif reste
 valide dans Gitea, dans un clone, et dans la doc construite. Réciproquement, le
