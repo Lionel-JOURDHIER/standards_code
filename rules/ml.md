@@ -138,6 +138,29 @@ mesure finale.
   élevée au carré avant d'être moyennée). `R²` compare des modèles entre eux,
   ce n'est pas une note de qualité absolue.
 
+## Modèles classiques — scikit-learn
+
+- Les algorithmes fondés sur une distance (KNN, SVM, k-means, PCA) exigent
+  des variables mises à la même échelle (`StandardScaler`, dans le même
+  `Pipeline`/`ColumnTransformer` qu'au § Fuite de données) ; les algorithmes
+  à base d'arbres (arbre de décision, Random Forest, gradient boosting/
+  XGBoost) n'en ont pas besoin. Standardiser quand même n'est pas faux, mais
+  masque l'oubli sur un algorithme qui, lui, en a réellement besoin.
+- Méthodes ensemblistes, un choix motivé par le problème plutôt que la
+  première essayée :
+
+  | Méthode | Principe | Effet |
+  |---|---|---|
+  | Bagging (Random Forest) | arbres indépendants entraînés en parallèle sur des échantillons bootstrap | réduit la variance |
+  | Boosting (AdaBoost, XGBoost) | arbres séquentiels, chacun corrige les erreurs du précédent | réduit le biais, plus sensible au bruit et aux valeurs aberrantes |
+  | Stacking | modèles hétérogènes combinés par un méta-modèle | gagne à combiner des modèles peu corrélés entre eux ; coûteux, à éviter sur un petit jeu de données |
+
+- Un outil AutoML (PyCaret, TPOT, AutoKeras) accélère la mise en place d'une
+  baseline multi-modèle (§ Baseline) — pas un pilote automatique sans
+  supervision : surveiller le surapprentissage que peut produire un balayage
+  massif de combinaisons, et ne jamais promouvoir un modèle dont personne ne
+  comprend le comportement.
+
 ## Apprentissage non supervisé
 
 Le clustering et la réduction de dimension n'ont pas de vérité terrain : les
@@ -151,6 +174,10 @@ ne s'appliquent pas telles quelles.
 - Loggé dans MLflow comme le reste (paramètres, graine, artefacts de
   visualisation), pour rester reproductible même sans métrique de décision
   unique à comparer d'un run à l'autre.
+- Détection d'anomalies (Isolation Forest et équivalents) : mêmes réserves,
+  pas de vérité terrain. Aucune mise à l'échelle nécessaire. Le taux de
+  contamination attendu (proportion d'anomalies) est une hypothèse métier
+  écrite dans la configuration, pas devinée à partir du jeu de données.
 
 ## MLflow
 
