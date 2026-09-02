@@ -54,18 +54,39 @@ Le `README.md` est le seul point d'entrée dont on est sûr qu'il sera lu. Il
 porte une section **Documentation** qui donne, dans cet ordre :
 
 1. l'adresse de la documentation publiée, si elle l'est ;
-2. la commande pour la construire et le chemin du fichier à ouvrir ;
+2. la commande pour la construire **et celle pour l'ouvrir** — un chemin de
+   fichier seul n'est pas une instruction : le lecteur est sous Windows, sous
+   WSL ou sur un serveur sans navigateur, et la commande n'est pas la même ;
 3. un lien relatif vers les guides en Markdown de `docs/`, qui fonctionne dans
    l'interface de Gitea sans rien construire.
 
-```markdown
+Bloc à recopier dans le README, à adapter au dépôt :
+
+````markdown
 ## Documentation
 
-- En ligne : <https://…>  *(à remplacer, ou à supprimer si non publiée)*
-- En local : `uv run sphinx-build -b html docs/source public`, puis ouvrir
-  `public/index.html`.
-- Sans rien construire : [guides](docs/source/guides/).
-```
+- **En ligne** : <https://…>  *(à remplacer, ou à supprimer si non publiée)*
+- **En local** — construire puis ouvrir :
+
+  ```bash
+  uv run sphinx-build -b html docs/source public
+  ```
+
+  | Environnement | Ouvrir la page d'accueil |
+  |---|---|
+  | Windows | `start public\index.html` |
+  | WSL | `explorer.exe public\index.html` |
+  | Linux bureau | `xdg-open public/index.html` |
+  | macOS | `open public/index.html` |
+  | Serveur sans navigateur | `python -m http.server -d public 8000`, puis <http://localhost:8000> |
+
+- **Sans rien construire** : [guides](docs/source/guides/).
+````
+
+Sous WSL, `xdg-open` échoue le plus souvent faute d'environnement de bureau :
+c'est `explorer.exe` qui ouvre le navigateur Windows, et il attend une barre
+oblique inverse. La dernière ligne du tableau est aussi celle qui sert quand la
+doc est construite sur un serveur.
 
 Le troisième point est ce qui garantit l'accessibilité : un lien relatif reste
 valide dans Gitea, dans un clone, et dans la doc construite. Réciproquement, le
