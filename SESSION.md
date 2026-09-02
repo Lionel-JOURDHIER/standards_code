@@ -26,8 +26,8 @@ combler les manques « au lieu le plus logique ».
 | 11 | pgvector | fait |
 | 12 | PySpark | fait |
 | 13 | Machine Learning | fait |
-| **14** | **Keras / PyTorch / NLP / audio / Hugging Face** | **à faire — reprendre ici** |
-| 15 | MLflow | à faire |
+| 14 | Keras / PyTorch / NLP / audio / Hugging Face | fait |
+| **15** | **MLflow** | **à faire — reprendre ici** |
 | 16 | MLOps 0 → 4 | à faire |
 | 17 | Evidently | à faire |
 | 18 | Sécurité en Python | à faire |
@@ -71,6 +71,32 @@ non supervisé dans ml.md`, fusionné dans `develop`) :
   dimension) : signale que Baseline/Registry/Portail qualité, écrits pour du
   supervisé avec un champion à battre, ne s'appliquent pas tels quels ; le
   nombre de clusters (coude/silhouette) reste indicatif.
+Pas de nouveau fichier de règle — treize règles inchangé.
+
+Cours 14 (Keras/PyTorch/NLP/audio/Hugging Face, 5 supports) traité : la
+majeure partie du contenu est théorique (maths du signal audio — Fourier,
+fenêtrage, biologie de l'audition ; fondamentaux réseau de neurones —
+neurone, activation, loss, optimiseurs) et hors du périmètre « convention de
+code » de ce dépôt, comme la théorie pure du cours 13. Quatre ajouts concrets
+dans `rules/ml.md` (commit `feat : PyTorch/Keras, fenêtre glissante,
+vectoriseur texte, modèles pré-entraînés dans ml.md`, fusionné dans
+`develop`) :
+- Nouvelle section « Framework : PyTorch ou Keras », en tête de fichier (même
+  esprit que « Deux styles » de `bdd.md`) : tableau de contexte repris du
+  support (recherche/contrôle -> PyTorch, production/déploiement -> Keras,
+  conclusion du support lui-même, cohérente avec l'unique dépôt deep learning
+  connu — `MNIST_01`, en PyTorch) ; gestion explicite du device PyTorch ;
+  `set_memory_growth` côté Keras.
+- § Données : bullet neuf sur la fenêtre glissante d'un modèle séquentiel
+  (RNN) — ne pas « prédire le présent », renvoi au piège du support.
+- § Fuite de données : bullet neuf sur le vectoriseur de texte (TF-IDF,
+  `CountVectorizer`), même règle fit-train/transform-reste que le
+  `ColumnTransformer` déjà écrit au cours 13.
+- Nouvelle section « Modèles pré-entraînés — Hugging Face », après Registry
+  et promotion : transfer learning par défaut plutôt qu'entraîner from
+  scratch ; `revision=` épinglée (même principe que la version figée MLflow) ;
+  licence du modèle/dataset vérifiée avant réutilisation ; jeton HF en
+  variable d'environnement.
 Pas de nouveau fichier de règle — treize règles inchangé.
 
 ### Décisions techniques prises pendant la revue
@@ -177,6 +203,16 @@ Pas de nouveau fichier de règle — treize règles inchangé.
   identification possible, pas de garantie d'irréversibilité) — et aucune
   règle PCA n'a été ajoutée : ni ml.md ni donnees.md ne couvrent la réduction
   de dimension pour l'instant, seul le clustering/non-supervisé l'a été.
-- Cours 14 (Keras/PyTorch/NLP/audio/Hugging Face) va aussi toucher `rules/ml.md`
-  (deep learning, au-delà du scikit-learn implicite des sections existantes) —
-  vérifier qu'il ne contredit pas les ajouts du cours 13 avant d'écrire.
+- Cours 14 traité, sans contradiction avec le cours 13 (vérifié : les sections
+  neuves s'articulent avec Registry et promotion / Fuite de données /
+  Données existantes plutôt que de les dupliquer).
+- Écart de méthode assumé, cours 14 : la licence des modèles/datasets Hugging
+  Face n'est mentionnée nulle part dans le support — ajout à partir d'un
+  risque connu (licences non permissives sur le Hub), pas d'un point du cours,
+  dans le même esprit que le shuffle/UDF ajoutés au cours 12.
+- Non retenu du cours 14, hors périmètre : théorie du signal audio (Fourier,
+  fenêtrage, biologie de l'audition — 35 slides), fondamentaux réseau de
+  neurones (neurone/activation/loss/optimiseurs — définitions), callbacks
+  Keras au détail (`EarlyStopping`, `ModelCheckpoint`, `TensorBoard` :
+  mécanique déjà couverte par les principes MLflow/Registry existants),
+  auto-encodeurs, GAN, diffusion, comparatif Hugging Face vs GitHub.
