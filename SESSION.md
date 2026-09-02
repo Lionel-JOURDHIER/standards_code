@@ -37,7 +37,7 @@ combler les manques « au lieu le plus logique ».
 | 22 | Streamlit | fait |
 | 23 | Selenium | fait |
 | 24 | Redmail | fait |
-| **25** | **Workflow I** | **à faire — reprendre ici** |
+| 25 | Workflow I | fait |
 
 Cours 11 (pgvector) traité : nouvelle section « Recherche vectorielle —
 pgvector » dans `rules/bdd.md`, entre Modèles et Requêtes (commit `feat :
@@ -518,6 +518,55 @@ Non retenu, hors périmètre : rien d'autre à retenir — le support est trop
 court pour receler d'autre divergence ou complément.
 
 Pas de nouveau fichier de règle — seize règles inchangé.
+
+Cours 25 (Workflow I, 23 diapositives) traité — **dernier cours de la
+revue**. Support d'accueil de la formation (compte Google pro, installation
+VSCode/Anaconda/Git, configuration `git config --global user.name/
+user.email`, `.gitignore`, environnement virtuel `venv`/`pip freeze >
+requirements.txt`, Markdown, bibliothèques courantes, notebook vs script,
+premier `import`) — c'est le support d'onboarding « jour 0 », logiquement en
+tête du parcours réel de formation, mais traité en dernier dans cette revue
+puisque les cours ont été pris dans l'ordre de la numérotation du dépôt de
+formation, pas de leur chronologie pédagogique.
+
+**Aucune modification.** Tout le contenu est soit hors périmètre (compte
+Google, installation d'éditeur, extensions VSCode — administratif/outillage
+de poste, pas une convention de code), soit déjà couvert **et déjà
+sciemment divergé** dès le cours 1, en toute première tâche de cette revue :
+- `venv`/`pip`/`pip freeze > requirements.txt` (slides 10-11, 15, 17) :
+  `rules/python.md` § Environnement impose déjà `uv` exclusivement, avec la
+  raison explicite « jamais [pip], maintenir en plus un `requirements.txt` :
+  deux verrous divergent toujours » — divergence déjà actée, pas à réaffirmer
+  une deuxième fois.
+- `git config --global user.name/user.email` (slide 8) : déjà dans
+  `socle-code.md` (« L'auteur du commit doit être identifiable »).
+- `.gitignore` avec `.venv` (slide 9) : déjà couvert partout où c'est
+  pertinent.
+- Notebook vs script (slide 18) : déjà couvert mot pour mot par le CLAUDE.md
+  racine et `rules/donnees.md` (« un notebook explore, dès qu'une
+  transformation est retenue, elle devient une fonction testable »).
+- Extension VSCode « black formatter » (slide 14) : divergence déjà actée
+  au cours 1 — le dépôt impose **ruff**, jamais black.
+- Anaconda (slide 4) : le support lui-même dit de le fermer et de ne s'en
+  servir que pour obtenir une distribution Python — rien à en retenir, non
+  contredit par `uv`.
+
+Ce cours confirme, plutôt qu'il ne surprend, que les décisions prises en
+tout début de revue (cours 1) tenaient déjà pour le support qui aurait
+logiquement dû être lu en premier.
+
+Pas de nouveau fichier de règle — seize règles inchangé.
+
+## Revue des 25 cours terminée
+
+Les 25 cours du corpus de formation ont été traversés un par un, dans
+l'ordre imposé par cette session. Bilan : seize règles au total, dont dix
+déjà présentes avant cette revue et six créées pendant — `tests-python.md`,
+`documentation.md`, `donnees.md` aux cours 1-10, `deploiement.md` au
+cours 16, `streamlit.md` au cours 22, `selenium.md` au cours 23. Les
+fichiers de suivi (`SESSION.md`, le journal externe) sont à jour à ce
+point ; le détail cours par cours reste consultable dans le journal externe
+pour un résumé final si besoin.
 
 ### Décisions techniques prises pendant la revue
 
