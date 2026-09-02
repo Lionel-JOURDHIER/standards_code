@@ -17,6 +17,7 @@ rules/bdd.md             idem db/, repositories/, migrations/, alembic/
 rules/deploiement.md     idem Dockerfile, docker-compose*.yml, k8s/, prefect.yaml
 rules/securite-api.md    idem src/api/, auth.py, security.py — Vault inclus
 rules/streamlit.md       idem app.py, Home.py, pages/, .streamlit/
+rules/selenium.md        idem scraping/, scraper*.py, *_scraper.py
 rules/cicd.md            idem .gitea/workflows/
 rules/http.md            idem clients/, integrations/ — appels HTTP sortants
 rules/documentation.md   idem docs/, conf.py, .rst, README.md — Sphinx
@@ -106,7 +107,7 @@ bash .claude/standards/hooks/verifier-installation
 ```
 
 La boucle ne rafraîchit que les règles **déjà présentes** dans le dépôt. Un
-`cp rules/*.md` déverserait les quinze règles dans tous les projets, y compris
+`cp rules/*.md` déverserait les seize règles dans tous les projets, y compris
 celles qui n'y servent à rien.
 
 Le vérificateur signale une copie du hook qui aurait dérivé de la référence.
