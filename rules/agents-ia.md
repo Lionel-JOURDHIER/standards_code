@@ -76,6 +76,9 @@ plantage, pas comme un calcul en cours.
 - Côté FastAPI : `StreamingResponse` autour d'un générateur asynchrone qui
   fait `async for chunk in chain.astream(...)`, jamais un `.invoke()`
   bloquant suivi d'un envoi d'un bloc.
+- Le streaming se perd aussi en aval du code : un reverse proxy qui met en
+  tampon annule tout le bénéfice, sans qu'aucune erreur n'apparaisse
+  (`rules/deploiement.md` § Reverse proxy devant une IA).
 
 ## RAG et bases vectorielles
 
@@ -237,3 +240,8 @@ plantage, pas comme un calcul en cours.
   rate limiting, CORS restreint (`rules/securite-api.md`). `host="0.0.0.0"`
   sans rien de tout ça n'est pas un raccourci acceptable en production,
   même si le protocole MCP lui-même ne l'impose pas.
+- Un serveur MCP en `streamable-http` **ne se réplique pas librement** : la
+  session porte des flux ouverts, elle vit dans un seul processus. Derrière
+  un reverse proxy, il faut une affinité qui ne dépende pas des cookies —
+  voir `rules/deploiement.md` § Reverse proxy devant une IA. Tant que le
+  service tourne en un seul exemplaire, le problème est invisible.

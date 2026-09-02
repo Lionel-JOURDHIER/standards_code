@@ -1084,9 +1084,9 @@ Forest) dans ml.md`, fusionné `--no-ff` dans `develop`, branche supprimée.
 ce résumé)
 
 **Fait :**
-- `git config --global user.email` passé de `lio.jourdhier@gmail.com` à
-  `l'adresse professionnelle`, conformément au socle (§ Commits, « l'auteur du
-  commit doit être identifiable […] avec l'adresse professionnelle »).
+- `git config --global user.email` passé de l'adresse personnelle à l'adresse
+  professionnelle, conformément au socle (§ Commits, « l'auteur du commit doit
+  être identifiable […] avec l'adresse professionnelle »).
   Sauvegarde de l'ancien fichier dans `~/.gitconfig.bak-20260902`.
 
 **Décisions techniques :**
@@ -1100,10 +1100,149 @@ ce résumé)
   divergence avec les copies déjà distribuées.
 
 **Vérifié :**
-- Commit d'essai dans un dépôt jetable : auteur
-  `Lionel JOURDHIER <l'adresse professionnelle>`. `user.name` inchangé.
+- Commit d'essai dans un dépôt jetable : auteur portant la nouvelle adresse,
+  `user.name` inchangé.
 
 **Points de vigilance pour la suite :**
 - Il reste, de l'audit de lisibilité, les trois points « à vérifier sur notre
   instance » de `cicd.md` (expressions autres qu'`always()`, `actions/cache`,
   lecture de `.github/workflows`), toujours sans réponse.
+
+## [2026-09-02] — Retrait de toute mention de l'employeur
+
+**Branche :** `develop` (réglage de poste + ce résumé)
+
+**Fait :**
+- `git config --global user.email` remis à l'adresse personnelle. Aucune
+  sauvegarde intermédiaire conservée : elle aurait contenu l'adresse retirée, et
+  `~/.gitconfig.bak-20260902` garde déjà l'état d'origine. Aucun réglage local
+  au dépôt n'existait, donc rien à défaire de ce côté.
+- Les deux mentions littérales de l'adresse professionnelle dans l'entrée
+  « Adresse de commit corrigée » ci-dessus remplacées par des tournures
+  génériques. L'entrée reste lisible : elle raconte le même changement, sans
+  nommer le domaine.
+
+**Décisions techniques :**
+- Le socle garde sa formulation « avec l'adresse professionnelle » (§ Commits) :
+  elle ne nomme aucun employeur, c'est une règle et non une donnée.
+- **Historique non réécrit.** Trois commits portent l'ancienne adresse, dont
+  `2060bf9 feat : socle initial`, qui est le **commit racine** : les retirer
+  réécrirait les 105 commits du dépôt, donc tous les hachages. Or `develop` et
+  `main` sont déjà poussés sur le remote (constaté dans les reflogs
+  `origin/*`, « update by push »), et le sous-module `.claude/standards` de
+  HorRAGor est épinglé sur `cd6dc95`, qui disparaîtrait. La réécriture est donc
+  une décision de l'utilisateur, pas un effet de bord de ce nettoyage.
+
+**Vérifié :**
+- Recherche insensible à la casse du nom de l'employeur sur l'arborescence hors
+  `.git`, et sur `~/.gitconfig` : aucune occurrence.
+- `git config --get user.email` retourne l'adresse personnelle ; `user.name`
+  inchangé.
+
+**Points de vigilance pour la suite :**
+- Les trois commits porteurs de l'ancienne adresse subsistent dans
+  l'historique, local et distant. Tant qu'ils y sont, l'information reste
+  accessible par `git log`.
+- Toujours sans réponse : les trois points « à vérifier sur notre instance » de
+  `cicd.md`.
+
+## [2026-09-02] — Historique réécrit pour retirer l'ancienne adresse
+
+**Branche :** `develop` (réécriture portant sur `develop` et `main`)
+
+**Fait :**
+- `git filter-repo` (via `uvx`, l'outil n'est pas installé sur le poste) avec un
+  `--mailmap` réattribuant les commits de l'ancienne adresse à
+  `Lionel JOURDHIER <lio.jourdhier@gmail.com>`, et un `--replace-text` nettoyant
+  les blobs : deux versions de `SESSION.md` contenaient l'adresse en clair.
+- Les 106 commits sont conservés, la topologie et les fusions `--no-ff` aussi.
+  Tous les hachages changent : le commit porteur de l'adresse était la racine.
+
+**Décisions techniques :**
+- Réécriture faite dans le dépôt en place (`--force`) plutôt que sur un clone
+  neuf : aucun autre worktree ni branche en cours ici, et la sauvegarde couvre
+  le retour arrière.
+- `filter-repo` supprime le remote `origin` par sécurité ; il a été remis à
+  l'identique après vérification.
+
+**Vérifié :**
+- `git log --all` : une seule identité, `Lionel JOURDHIER
+  <lio.jourdhier@gmail.com>`. Aucune occurrence du nom retiré dans les blobs de
+  tous les commits, ni dans les messages.
+- `git rev-list --all --count` : 106, comme avant. `git fsck` : rien (hors bruit
+  `Zone.Identifier`, artefacts WSL sans rapport).
+- Sauvegarde avant réécriture : `git bundle` de tous les refs, vérifié par
+  `git bundle verify`, dans le répertoire de travail temporaire de la session —
+  donc **non pérenne**. Anciens refs : `develop` `fd63279`, `main` `f9a2381`.
+
+**Correspondance des hachages utiles :**
+
+| Avant | Après | Ce que c'est |
+|---|---|---|
+| `2060bf9` | `0b98115` | commit racine, `feat : socle initial` |
+| `cd6dc95` | `9f7537c` | pointeur du sous-module de HorRAGor |
+| `f9a2381` | `1608ca2` | ancien `main` |
+| `fd63279` | `74a7aa1` | ancien `develop` |
+
+**Points de vigilance pour la suite :**
+- **Le remote n'est pas encore réécrit** : l'accès SSH ne fonctionne pas depuis
+  ce poste (`Permission denied (publickey)`). Tant que le `push --force` n'est
+  pas fait, GitHub sert toujours l'ancien historique, adresse incluse. Et même
+  après, GitHub garde un temps les objets accessibles par leur SHA : un effacement
+  complet côté GitHub passe par leur support.
+- Le sous-module `.claude/standards` de HorRAGor est épinglé sur `cd6dc95`, qui
+  n'existe plus après le push. À repointer sur `main`.
+- Toujours sans réponse : les trois points « à vérifier sur notre instance » de
+  `cicd.md`.
+
+## [2026-09-02] — Traefik : le module 8 du cours intégré à deploiement.md
+
+**Branche :** `feature/traefik-module-8`
+
+**Fait :**
+- Reprise complète de `tuto-traefik.html`. Le § Reverse proxy — Traefik ne
+  couvrait que la première moitié du support (vocabulaire, labels, socket,
+  dashboard, CORS, ACME) ; tout le module 8 manquait, ainsi que plusieurs
+  pannes du module dépannage.
+- Ajouts au § existant : priorité par longueur de règle et `PathPrefix` qui
+  compare une chaîne et non des segments (`/apidocs` matche `/api`) ; labels
+  lus à la création du conteneur (`restart` ne relit pas) ; version ≥ v3.6
+  imposée par Docker 29 ; `--providers.docker.network` pour un conteneur sur
+  deux réseaux (504 trompeur) ; provider `file` pour le TLS ; `forwardauth`
+  contre la réimplémentation de l'auth par service ; le proxy ne sert pas de
+  statique ; point de défaillance unique assumé ; diagnostic ordonné (logs,
+  routes connues, logs d'accès) et 504 ajouté aux codes de retour ;
+  métriques de bord vs métriques applicatives.
+- Nouveau § « Reverse proxy devant une IA — répliques, sessions, streaming » :
+  sonde de santé côté proxy (distincte du `healthcheck:` Compose), session
+  MCP non réplicable, cookie collant inopérant pour un client sans session
+  persistante contre `strategy=hrw`, `buffering` qui annule le streaming et
+  les deux réflexes nginx (`compress`, `flushInterval`) démentis par les
+  mesures du support.
+- Deux renvois réciproques dans `rules/agents-ia.md` (§ Connecteur MCP et
+  § Streaming) vers ce nouveau §.
+
+**Décisions techniques :**
+- Un § séparé plutôt qu'un allongement du premier : ces points ne se
+  manifestent qu'au-delà d'un conteneur unique, donc jamais en développement
+  local. Les mélanger aux quatre notions de base aurait noyé les deux.
+- Écarté du support, volontairement : la comparaison Caddy/nginx/Envoy, les
+  terrains d'usage, l'AI Gateway et le MCP Gateway de Traefik Hub (offre
+  commerciale, hors du proxy open source utilisé). Ce sont des éléments de
+  cours, pas des règles applicables à un dépôt.
+- `agents-ia.md` ne duplique pas la règle : il renvoie, parce que le geste
+  est côté déploiement même si la panne se voit côté agent.
+
+**Fichiers principaux modifiés :**
+- `rules/deploiement.md` (236 → 327 lignes), `rules/agents-ia.md` (+8).
+
+**Vérifié :**
+- Aucune ligne de plus de 79 caractères introduite (les deux lignes longues
+  d'`agents-ia.md` préexistaient).
+- Les deux renvois pointent sur un titre de § qui existe réellement.
+
+**Points de vigilance pour la suite :**
+- `deploiement.md` devient la règle la plus longue après `ml.md` : à
+  surveiller, elle se charge sur tout `Dockerfile*` et tout `compose`.
+- Les mesures d'affinité et de streaming du support ont été relevées sur
+  `traefik:v3.6.25` — à revérifier si le proxy change de version majeure.
