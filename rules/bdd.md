@@ -16,51 +16,100 @@ paths:
      architectures de réseau et où cette règle n'aurait aucun sens.
 
      Cette règle complète le tableau « Choix par défaut » de rules/python.md,
-     elle ne le remplace pas : SQLAlchemy 2.0 asynchrone, Alembic, SQLite en
-     local et en test, PostgreSQL en serveur. -->
+     elle ne le remplace pas : SQLAlchemy, Alembic, SQLite en local et en
+     test, PostgreSQL en serveur. -->
 
-## Style 2.0, pas 1.x
+## Deux styles, ne pas les mélanger
 
-Beaucoup d'exemples encore en circulation utilisent l'API héritée. Elle
-fonctionne, elle n'est pas la nôtre — et les deux styles mélangés dans un même
-projet produisent des erreurs de typage incompréhensibles.
+La bibliothèque installée est la 2.0. Elle accepte encore la syntaxe héritée de
+la 1.x, ce qui fait cohabiter deux écritures de la même chose.
 
-| Hérité (1.x) | Attendu (2.0) |
+| Hérité (1.x) | Style 2.0 |
 |---|---|
 | `Base = declarative_base()` | `class Base(DeclarativeBase): ...` |
 | `nom = Column(String, nullable=False)` | `nom: Mapped[str] = mapped_column()` |
-| `session.query(Modele).filter(...)` | `select(Modele).where(...)` + `session.execute(...)` |
-| `create_engine` / `Session` | `create_async_engine` / `async_sessionmaker` |
+| `session.query(Modele).filter_by(...)` | `select(Modele).where(...)` + `session.execute(...)` |
 
-`Mapped[str]` implique `NOT NULL`, `Mapped[str | None]` implique `NULL` : la
-nullabilité se lit dans l'annotation, elle n'est pas à répéter en argument.
+- **Projet neuf : style 2.0.** `session.query()` est marqué hérité par
+  SQLAlchemy et finira par disparaître ; `Mapped[str]` implique `NOT NULL` et
+  `Mapped[str | None]` implique `NULL`, donc la nullabilité se lit dans
+  l'annotation au lieu d'être répétée en argument.
+- **Projet existant écrit en 1.x : il reste en 1.x.** Une modification suit le
+  style du fichier qu'elle touche, conformément à la priorité 3 du socle. Une
+  migration de style est une tâche à part, décidée et faite d'un bloc, pas au
+  détour d'un correctif.
+- **Jamais les deux dans le même dépôt.** Un modèle en `Column` et un autre en
+  `Mapped` produisent des erreurs de typage incompréhensibles, et personne ne
+  sait plus quelle forme écrire. Le style retenu est écrit dans le `CLAUDE.md`
+  du dépôt.
 
 ## Session
 
-- **Une session par unité de travail.** Jamais de session globale de module,
-  jamais une session partagée entre deux requêtes HTTP : les objets restent
-  attachés, l'état fuit d'une opération à l'autre et les erreurs sont
-  irreproductibles.
-- Ouverture par gestionnaire de contexte, qui ferme et libère la connexion même
-  en cas d'exception :
+**Une session par unité de travail.** Jamais de session globale de module,
+jamais une session partagée entre deux requêtes HTTP : les objets restent
+attachés, l'état fuit d'une opération à l'autre et les erreurs sont
+irreproductibles.
 
-  ```python
-  async with async_session() as session:
-      async with session.begin():
-          session.add(logement)
-  ```
+Ouverture par gestionnaire de contexte, qui ferme et libère la connexion même
+en cas d'exception :
 
-  `session.begin()` valide en sortie de bloc et annule sur exception. Écrire un
-  `rollback()` à la main n'est utile que hors de ce schéma.
+```python
+with Session() as session:          # synchrone
+    with session.begin():
+        session.add(logement)
+```
 
-- Anti-schéma courant : un `try` qui englobe le `with`, et un `except` qui
-  appelle `session.rollback()` — la variable n'existe plus ou la session est
-  déjà fermée. Le rattrapage se met **à l'intérieur** du bloc, ou nulle part.
+`session.begin()` valide en sortie de bloc et annule sur exception. Écrire un
+`rollback()` à la main n'est utile que hors de ce schéma.
+
+- Anti-schéma courant, présent tel quel dans les supports de formation : un
+  `try` qui englobe le `with`, et un `except` qui appelle `session.rollback()`
+  — la variable n'existe plus ou la session est déjà fermée. Le rattrapage se
+  met **à l'intérieur** du bloc, ou nulle part.
+- Une session ne se « ferme » pas par `session.dispose()` : cette méthode
+  n'existe pas sur une session. C'est le **moteur** qui se dispose, une fois,
+  à l'arrêt du programme.
+
+### Synchrone ou asynchrone
+
+Le critère est le contexte d'exécution, pas la préférence :
+
+| Contexte | Attendu |
+|---|---|
+| Script, notebook, outil en ligne de commande, tâche planifiée | **synchrone** — `create_engine`, `sessionmaker` |
+| Route FastAPI, service qui tient des connexions concurrentes | **asynchrone** — `create_async_engine`, `async_sessionmaker` |
+
+Un seul des deux par projet : mélanger fait apparaître des appels bloquants au
+milieu d'une boucle d'événements, ce qui sérialise silencieusement tout le
+service.
+
 - Sur FastAPI, la session est une dépendance (`Depends(get_session)`), une par
   requête. Elle n'est pas créée dans la fonction de route.
 - En asynchrone, tout accès à un attribut peut déclencher une requête : le
   chargement paresseux hors session lève `MissingGreenlet`. Charger
   explicitement ce qui sera lu (`selectinload`) plutôt que de compter dessus.
+- Un appel synchrone dans une route asynchrone est le défaut le plus fréquent
+  de cette pile, et il ne se voit pas : le service fonctionne, il ne tient
+  simplement plus la charge.
+
+## Conception : Merise avant le code
+
+Une table ne s'improvise pas dans l'éditeur. Trois étapes, dans l'ordre, avant
+d'écrire une classe :
+
+1. **MCD** — entités, associations, cardinalités des deux côtés (`0,1`, `1,1`,
+   `0,n`, `1,n`). C'est là qu'on décide ce qui est obligatoire.
+2. **MLD** — clés primaires et étrangères déduites des cardinalités.
+3. **MPD** — types SQL concrets, longueurs, contraintes.
+
+- Une information répétée à l'identique sur plusieurs lignes est une table à
+  part, référencée par une clé étrangère : moins d'espace, et surtout une seule
+  orthographe possible. Une faute de frappe dans un libellé recopié crée une
+  catégorie fantôme.
+- Une relation *n-m* se résout **toujours** par une table d'association, qui
+  porte au passage ses propres attributs (quantité, date, rôle).
+- Dénormaliser est une optimisation, pas un point de départ : on ne le fait
+  qu'avec une mesure qui le justifie, et on l'écrit.
 
 ## Modèles
 
@@ -90,6 +139,15 @@ nullabilité se lit dans l'annotation, elle n'est pas à répéter en argument.
   itération. Charger en une fois (`selectinload`, `joinedload`) et vérifier en
   activant `echo=True` en développement quand le doute existe.
 - L'agrégation et le filtrage se font en base, pas en Python après un `SELECT *`.
+- `WHERE` filtre les lignes **avant** l'agrégation, `HAVING` filtre le résultat
+  **après**. Mettre une condition sur une colonne brute dans un `HAVING`
+  fonctionne parfois et coûte un balayage complet de la table.
+- Une sous-requête est entre parenthèses, et rend soit une valeur unique
+  (comparaison), soit une colonne (`IN (...)`). Une sous-requête corrélée
+  s'exécute une fois par ligne : vérifier avec `EXPLAIN` avant de s'en
+  satisfaire.
+- Ne sélectionner que les colonnes utilisées. `SELECT *` transporte des données
+  inutiles et casse silencieusement le jour où une colonne est ajoutée.
 
 ## Migrations
 
@@ -120,4 +178,7 @@ nullabilité se lit dans l'annotation, elle n'est pas à répéter en argument.
   le code, ni dans un log, ni dans une trace d'erreur renvoyée à un client.
 - Un seul moteur par processus, créé au démarrage : c'est lui qui porte le pool
   de connexions. Un moteur créé par appel épuise les connexions du serveur.
-- `await engine.dispose()` à l'arrêt de l'application (événement d'arrêt FastAPI).
+- Le moteur se libère à l'arrêt du programme : `engine.dispose()`, ou
+  `await engine.dispose()` en asynchrone (événement d'arrêt FastAPI).
+- `echo=True` est un outil de mise au point : il journalise chaque requête, y
+  compris les valeurs liées. Il ne reste pas dans le code livré.
