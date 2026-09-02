@@ -159,17 +159,33 @@ ne s'appliquent pas telles quelles.
   modèle, exemple d'entrée, dépendances, courbes et matrices en artefact.
 - Jamais de données réelles en artefact (échantillons clients, adresses,
   coordonnées d'ouvrages).
+- Tracking store (paramètres, métriques, tags — SQLite ou PostgreSQL) et
+  artifact store (poids, courbes, gros fichiers — S3/MinIO) sont deux backends
+  séparés. Les confondre fait grossir une base relationnelle avec des blobs, ou
+  interroger un espace de stockage objet comme s'il indexait des métriques.
+- `log_model(model, "model", registered_model_name=...)` inscrit directement
+  le modèle au Model Registry. Sans ce paramètre, le modèle reste un artefact
+  du run, invisible du Registry tant que `mlflow.register_model()` n'est pas
+  appelé explicitement — c'est ce geste, pas le seul `log_model`, qui rend un
+  modèle éligible à la promotion (§ Registry et promotion).
 
 ## Registry et promotion
 
 - Aucune copie manuelle d'un fichier de poids. Le seul chemin vers la production
   est le Model Registry.
+- Deux familles d'URI, pas interchangeables : `runs:/<run_id>/...` pointe une
+  exécution précise, pour comparer ou reproduire une expérience — jamais pour
+  servir en production. Seul `models:/<nom>@<alias>` ou `models:/<nom>/<n°>`
+  (Model Registry) alimente un service.
 - Critères de promotion vérifiés et écrits dans la fiche modèle : bat le champion
   en place sur le test gelé, tient le budget de latence, ne régresse sur aucune
   tranche sensible.
-- La production charge une **version figée** par URI, pas un stage résolu
-  dynamiquement : sinon une promotion change le comportement en production sans
-  déploiement.
+- Un alias (`@production`, `@champion`) est préférable au numéro de version brut
+  pour sa lisibilité, mais le service ne le résout pas à chaque appel : il le
+  résout une fois (démarrage, ou événement explicite d'invalidation de cache) et
+  sert cette **version figée** jusqu'au prochain événement. Le résoudre à chaque
+  requête revient à laisser une promotion changer le comportement en production
+  sans trace de déploiement.
 - Le champion précédent reste déployable. Retour arrière en une commande.
 
 ## Modèles pré-entraînés — Hugging Face
