@@ -54,7 +54,7 @@ Ouverture par gestionnaire de contexte, qui ferme et libère la connexion même
 en cas d'exception :
 
 ```python
-with Session() as session:          # synchrone
+with Session() as session:  # synchrone
     with session.begin():
         session.add(logement)
 ```

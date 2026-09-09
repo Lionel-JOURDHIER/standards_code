@@ -90,7 +90,9 @@ plantage, pas comme un calcul en cours.
   ```python
   rag_chain = (
       {"context": retriever | format_docs, "question": RunnablePassthrough()}
-      | prompt | llm | StrOutputParser()
+      | prompt
+      | llm
+      | StrOutputParser()
   )
   ```
   `RunnablePassthrough()` laisse un champ intact, `format_docs` aplatit les

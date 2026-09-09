@@ -58,8 +58,8 @@ une sélection de colonne elle modifie une copie temporaire : l'opération ne
 produit aucune erreur et n'a simplement aucun effet.
 
 ```python
-df["revenu"] = df["revenu"].fillna(mediane)     # attendu
-df["revenu"].fillna(mediane, inplace=True)      # sans effet, silencieusement
+df["revenu"] = df["revenu"].fillna(mediane)  # attendu
+df["revenu"].fillna(mediane, inplace=True)  # sans effet, silencieusement
 ```
 
 - Une sélection de lignes est une vue : la modifier déclenche un
