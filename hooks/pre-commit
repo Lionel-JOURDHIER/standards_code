@@ -89,8 +89,11 @@ done
 contenu() { git show ":$1"; }
 
 # --- Fichiers qui ne doivent jamais être committés -------------------------
+# CHEMINS_EXCLUS s'applique ici aussi : c'est ce qui permet de garder un jeu
+# d'essai synthétique (exemples/*.xlsx) dans un dépôt où *.xlsx est interdit.
 for f in "${FICHIERS[@]:-}"; do
   [ -z "$f" ] && continue
+  est_exclu "$f" && continue
   for motif in $MOTIFS_INTERDITS; do
     # shellcheck disable=SC2254
     case "$f" in
