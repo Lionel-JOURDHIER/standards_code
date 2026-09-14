@@ -1371,3 +1371,29 @@ ce résumé)
   (graphify) ne sont pas versionnés et mentionnent un `graphify-out/` absent.
 - `from-review` cherche la revue dans la conversation courante : après un
   `/clear`, il faut relancer `reviewer` avant d'importer.
+
+## [2026-09-14] — verifier-installation : core.hooksPath absolu
+
+**Branche :** `feature/verifier-hookspath-absolu`
+
+**Fait :**
+- `hooks/verifier-installation` : un `core.hooksPath` absolu n'est plus
+  préfixé par la racine du dépôt.
+
+**Décisions techniques :**
+- `case "$chemin" in /*)` plutôt qu'un `realpath` : pas de dépendance, et le
+  message affiché garde la forme exacte du réglage git.
+
+**Fichiers principaux modifiés :**
+- `hooks/verifier-installation`.
+
+**Vérifié :**
+- PDF_DWG (hooksPath absolu) : passait de « pre-commit absent » à cinq OK,
+  épreuve réelle comprise. VALOPHIS mobile (hooksPath relatif) : inchangé,
+  garde-fou actif. Trouvé en installant le kit backlog dans PDF_DWG : le
+  premier `maj-standards` y annonçait un garde-fou cassé alors que le hook
+  était en place et exécutable.
+
+**Points de vigilance pour la suite :**
+- `tests/banc-hook.sh` ne couvre que le hook, pas le vérificateur ; ce cas
+  n'a donc pas de test automatique.
