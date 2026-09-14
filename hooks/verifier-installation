@@ -32,7 +32,13 @@ else
   ok "core.hooksPath = $chemin"
 fi
 
-HOOK="$RACINE/$chemin/pre-commit"
+# core.hooksPath peut être absolu (c'est ce que pose « git config core.hooksPath
+# $(pwd)/.githooks ») : le préfixer par la racine donnerait un chemin fantôme
+# et un « pre-commit absent » à tort.
+case "$chemin" in
+  /*) HOOK="$chemin/pre-commit" ;;
+  *) HOOK="$RACINE/$chemin/pre-commit" ;;
+esac
 if [ ! -f "$HOOK" ]; then
   ko "$chemin/pre-commit est absent : tous les commits passent, sans message"
   note "cp .claude/standards/hooks/pre-commit $chemin/pre-commit"
