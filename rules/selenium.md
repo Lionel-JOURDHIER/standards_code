@@ -51,9 +51,7 @@ pages). `WebDriverWait` + `expected_conditions` attend l'état réel plutôt
 qu'une durée devinée :
 
 ```python
-WebDriverWait(driver, 10).until(
-    EC.visibility_of_element_located((By.CSS_SELECTOR, ".quote"))
-)
+WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".quote")))
 ```
 
 Sans ce wait, un élément injecté par JavaScript après le chargement initial
