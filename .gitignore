@@ -6,3 +6,11 @@
 # Copie locale du hook, refaite par la commande de mise à jour du README.
 # La référence versionnée est hooks/pre-commit.
 .githooks/pre-commit
+
+# Graphe de code graphify : régénéré par « graphify update . », 700 Ko de
+# fichiers dérivés qui changeraient à chaque commit.
+graphify-out/
+
+# Réglages Claude Code propres au poste (chemins absolus vers les outils).
+# Les réglages partagés iraient dans .claude/settings.json.
+.claude/settings.local.json

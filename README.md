@@ -25,7 +25,12 @@ rules/documentation.md   idem docs/, conf.py, .rst, README.md — Sphinx
 rules/workflow-session.md déroulé d'une session, chargé toujours
 modeles/modele-CLAUDE.md à copier en CLAUDE.md et remplir dans un nouveau dépôt
 modeles/modele-README.md à copier en README.md et remplir dans un nouveau dépôt
+modeles/modele-BACKLOG.md à copier en BACKLOG.md — gabarit vide, géré par /backlog
 modeles/FICHE-MODELE.md  une par modèle promu en production
+agents/reviewer.md       revue lecture seule d'un diff ou d'une branche  -> Fable
+agents/planner.md        plan d'implémentation, lecture seule            -> Opus
+agents/implementer.md    application d'un plan ou d'une revue, avec tests -> Sonnet
+commands/backlog.md      /backlog : la seule commande à connaître
 hooks/pre-commit         garde-fou git, configurable par dépôt
 hooks/standards.conf.exemple
 hooks/verifier-installation  contrôle que le garde-fou est vraiment actif
@@ -58,6 +63,19 @@ cp .claude/standards/rules/python.md .claude/rules/python.md
 Une copie plutôt qu'un lien symbolique : sous Windows les liens exigent les
 droits administrateur ou le mode développeur. La contrepartie est que la copie
 peut dater — d'où la commande de mise à jour ci-dessous.
+
+Et, si le dépôt doit tenir un backlog et passer par la revue avant fusion :
+
+```bash
+mkdir -p .claude/agents .claude/commands
+cp .claude/standards/modeles/modele-BACKLOG.md BACKLOG.md
+cp .claude/standards/agents/*.md .claude/agents/
+cp .claude/standards/commands/backlog.md .claude/commands/backlog.md
+```
+
+Claude ne lit les agents que dans `.claude/agents/` et les commandes que dans
+`.claude/commands/` : les fichiers du sous-module ne sont pas découverts tout
+seuls, la copie est nécessaire. Voir « Backlog et revue » plus bas.
 
 Le modèle ne s'appelle pas `CLAUDE.md` dans le sous-module, et ce n'est pas
 cosmétique : Claude charge les `CLAUDE.md` des sous-répertoires dès qu'il lit un
@@ -113,6 +131,9 @@ celles qui n'y servent à rien. Pour en ajouter une au passage :
 REGLES_EN_PLUS=workflow-session.md bash .claude/standards/hooks/maj-standards
 ```
 
+Même logique pour `.claude/agents/` et `.claude/commands/` : seuls les fichiers
+déjà présents sont rafraîchis.
+
 Il remet aussi le hook en place et lance le vérificateur, qui signale une copie
 du hook ayant dérivé de la référence.
 
@@ -132,6 +153,39 @@ Le script ne committe rien : il termine en affichant ce qui reste à valider.
 
 Ne recopiez que les règles des langages présents : une règle chargée pour rien
 consomme du contexte à chaque session.
+
+## Backlog et revue
+
+Trois agents et une commande, tous facultatifs, à copier comme indiqué dans
+« Installer dans un dépôt ». Aucune automatisation de PR : tout se passe dans
+la session, rien n'est publié.
+
+| Fichier | Rôle | Modèle | Écrit ? |
+|---|---|---|---|
+| `commands/backlog.md` | `/backlog` : état, `add`, `migrate`, `triage`, `next`, `done`, `from-review` | celui de la session | `BACKLOG.md` seulement, après un tableau de validation |
+| `agents/planner.md` | transforme une entrée `BL-xxx`, une demande ou une revue en plan par étapes vérifiables | Opus | rien |
+| `agents/implementer.md` | applique le plan étape par étape, tests et vérification à chaque étape | Sonnet | le code et les tests, jamais `BACKLOG.md` ni `SESSION.md` |
+| `agents/reviewer.md` | relit un diff ou une branche, constats prouvés par `fichier:ligne`, candidats pour le backlog en fin de rapport | Fable | rien |
+
+Cycle type, sur une branche `feature/*` tirée de `develop` :
+
+```
+/backlog next M                               → propose BL-012
+Utilise l'agent planner pour BL-012           → plan structuré
+Utilise l'agent implementer pour appliquer le plan
+Utilise l'agent reviewer sur la branche courante
+/backlog from-review                          → importe les candidats de la revue
+/backlog done BL-012 feature/<slug>
+```
+
+Le modèle de chaque agent est fixé dans son frontmatter. Ne pas définir
+`CLAUDE_CODE_SUBAGENT_MODEL` : la variable écrase ces choix et tous les agents
+tournent alors sur le même modèle. Le format des entrées est décrit en tête de
+`BACKLOG.md` ; les noms de champs ne se changent pas, les agents les lisent.
+
+Un `TODO.md` existant se convertit avec `/backlog migrate`, qui présente le
+résultat avant d'écrire et laisse l'ancien fichier en place, marqué comme
+migré.
 
 ## Modifier une règle
 
