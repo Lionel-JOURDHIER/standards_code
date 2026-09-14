@@ -94,7 +94,7 @@ commit qui aurait dû être refusé passe.
 bash tests/banc-hook.sh
 ```
 
-Trente-trois cas, chacun dans un dépôt jetable. Deux d'entre eux gardent des
+Trente-six cas, chacun dans un dépôt jetable. Deux d'entre eux gardent des
 défauts déjà rencontrés : un motif comme `*.xlsx` développé par le shell avant
 la comparaison (le fichier interdit passait dès qu'un autre `.xlsx` traînait à
 la racine), et une `standards.conf` en CRLF qui désactivait tout en silence.

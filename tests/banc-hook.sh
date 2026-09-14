@@ -71,6 +71,15 @@ cas "nom avec espaces et accents" refus 'MOTIFS_INTERDITS="*.xlsx"' feature/x \
   bash -c ': > "relevé final.xlsx"; git add "relevé final.xlsx"'
 cas "suppression d un fichier interdit déjà suivi" accepte 'MOTIFS_INTERDITS="*.xlsx"' feature/x \
   bash -c ': > v.xlsx; git add v.xlsx; git commit -qm v --no-verify; git rm -q v.xlsx'
+cas "xlsx dans un chemin exclu (jeu d essai)" accepte 'MOTIFS_INTERDITS="*.xlsx"
+CHEMINS_EXCLUS="exemples/*"' feature/x \
+  bash -c 'mkdir -p exemples; : > exemples/e.xlsx; git add exemples/e.xlsx'
+cas "xlsx exclu dans un sous-dossier profond (motif */exemple/*)" accepte 'MOTIFS_INTERDITS="*.xlsx"
+CHEMINS_EXCLUS="*/exemple/*"' feature/x \
+  bash -c 'mkdir -p "src appli/exemple"; : > "src appli/exemple/e.xlsx"; git add "src appli/exemple/e.xlsx"'
+cas "xlsx hors du chemin exclu reste refusé" refus 'MOTIFS_INTERDITS="*.xlsx"
+CHEMINS_EXCLUS="exemples/*"' feature/x \
+  bash -c ': > e.xlsx; git add e.xlsx'
 
 printf '\n== Python : print ==\n'
 cas "print() interdit" refus 'INTERDIRE_PRINT=1' feature/x \
