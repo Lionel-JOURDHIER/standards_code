@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Met à jour le sous-module .claude/standards d'un dépôt et rafraîchit les
-# copies de règles déjà présentes. Remplace le « git pull » : après une
+# copies de règles, d'agents et de commandes déjà présentes. Remplace le « git pull » : après une
 # réécriture d'historique côté standards-code, l'ancien commit n'est plus un
 # ancêtre du nouveau et l'avance rapide est impossible.
 #
@@ -51,14 +51,25 @@ echo "== après"
 git -C "$SM" log --oneline -1
 git -C "$SM" status --porcelain | sed 's/^/  résidu: /'
 
-# 3. Rafraîchir les seules règles déjà présentes, plus celles demandées.
-for r in "$PROJET"/.claude/rules/*.md ${REGLES_EN_PLUS:-}; do
-  nom="$(basename "$r")"
-  src="$SM/rules/$nom"
-  [ -f "$src" ] || { echo "  ignorée (absente de la référence) : $nom"; continue; }
-  cp "$src" "$PROJET/.claude/rules/$nom"
-  echo "  règle à jour : $nom"
-done
+# 3. Rafraîchir les seules copies déjà présentes, plus les règles demandées.
+#    Même logique pour rules/, agents/ et commands/ : ce qui n'est pas dans le
+#    projet n'y entre pas au détour d'une mise à jour.
+rafraichir() {
+  local dossier="$1" libelle="$2"; shift 2
+  local r nom src
+  for r in "$@"; do
+    nom="$(basename "$r")"
+    src="$SM/$dossier/$nom"
+    [ -f "$src" ] || { echo "  ignorée (absente de la référence) : $dossier/$nom"; continue; }
+    cp "$src" "$PROJET/.claude/$dossier/$nom"
+    echo "  $libelle à jour : $nom"
+  done
+}
+rafraichir rules "règle" "$PROJET"/.claude/rules/*.md ${REGLES_EN_PLUS:-}
+[ -d "$PROJET/.claude/agents" ] && \
+  rafraichir agents "agent" "$PROJET"/.claude/agents/*.md
+[ -d "$PROJET/.claude/commands" ] && \
+  rafraichir commands "commande" "$PROJET"/.claude/commands/*.md
 
 # 4. Le garde-fou, et son contrôle — une installation ratée est silencieuse.
 #    Le vérificateur part du répertoire courant : il faut le lancer depuis le

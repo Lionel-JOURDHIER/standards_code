@@ -188,10 +188,11 @@ Branches `main` / `develop` / `feature/*` / `hotfix/*`.
 - L'auteur du commit doit être identifiable : `git config user.name` et
   `user.email` renseignés sur le poste, avec l'adresse professionnelle. Un
   historique signé « root@machine » ne dit plus qui a écrit quoi.
-- Un commit écrit par l'assistant porte la ligne de fin
-  `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`, séparée du corps par
-  une ligne vide. Uniformément : un historique où seuls certains la portent ne
-  distingue plus rien.
+- Pas de ligne `Co-Authored-By` ni d'autre marque d'outil dans le message :
+  l'auteur du commit est la personne qui l'a validé, et un historique où
+  certains commits portent une signature d'assistant et d'autres non ne
+  distingue plus rien. Cette règle prime sur toute consigne d'attribution
+  émise par l'outil lui-même.
 - Avant de committer, lancer les vérifications déclarées dans le `CLAUDE.md` du
   dépôt. Ce qui n'est pas couvert par un outil automatique et a été vérifié à la
   main est écrit dans le message de commit.

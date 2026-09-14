@@ -8,11 +8,17 @@
 2. Lire `ARCHITECTURE.md` — état courant de l'architecture.
 3. Si le dépôt a un graphe de code, l'interroger avant tout parcours de fichiers
    bruts (commande dans le `CLAUDE.md` du dépôt).
-4. Identifier la seule tâche de la session.
+4. Identifier la seule tâche de la session. Si le dépôt a un `BACKLOG.md`,
+   `/backlog next` la propose ; l'utilisateur la passe en « en cours ».
 
 ## Pendant
 
 - Une tâche à la fois, sur une branche `feature/*` créée depuis `develop`.
+- Si le dépôt a les agents `planner`, `implementer` et `reviewer` dans
+  `.claude/agents/` : plan par `planner` avant de coder une tâche de taille M
+  ou L, exécution par `implementer`, et revue par `reviewer` de la branche
+  avant la fusion dans `develop`. Les constats IMPORTANT se corrigent avant
+  de fusionner ; les PRE-EXISTANT et les suggestions vont au backlog.
 - Texte uniquement dans le contexte. Un PDF ou une capture d'écran passent par
   une extraction texte préalable.
 
@@ -42,7 +48,10 @@ d'annoncer les avoir faits.
 5. `ARCHITECTURE.md` mis à jour si l'architecture a bougé.
 6. Commit sur la branche `feature/*`, fusion dans `develop` avec
    `git merge --no-ff`, suppression de la branche.
-7. L'assistant signale que la tâche est close et propose le `/clear` ; c'est
+7. Si le dépôt a un `BACKLOG.md` : `/backlog from-review` pour les candidats
+   de la revue, puis `/backlog done BL-xxx <branche>`, et un commit `docs :`
+   pour le backlog — il ne voyage pas dans le commit du correctif.
+8. L'assistant signale que la tâche est close et propose le `/clear` ; c'est
    l'utilisateur qui le lance.
 
 Ne jamais proposer `/clear` avant que les vérifications passent et que
