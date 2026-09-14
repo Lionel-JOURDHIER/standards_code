@@ -80,4 +80,6 @@ réelles — sur demande explicite uniquement.
 
      Ce qui ne vaut que pour CE dépôt va dans le présent fichier, pas dans
      .claude/rules/, dont le contenu est celui du dépôt de standards et se fait
-     écraser à chaque mise à jour. -->
+     écraser à chaque mise à jour. Même chose pour .claude/agents/ et
+     .claude/commands/ (planner, implementer, reviewer, /backlog) : copies du
+     sous-module, rafraîchies par hooks/maj-standards, pas à éditer ici. -->

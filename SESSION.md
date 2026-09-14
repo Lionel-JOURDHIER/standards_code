@@ -1298,3 +1298,76 @@ ce résumé)
   un garde-fou actif sans rapport. Corrigé par un sous-shell `cd "$PROJET"`.
   Le banc de test ne l'avait pas vu, le répertoire courant y étant justement
   le projet.
+
+## [2026-09-14] — Kit backlog + revue : agents planner / implementer / reviewer et commande /backlog
+
+**Branche :** `feature/kit-backlog-revue`
+
+**Fait :**
+- Intégration du kit déposé dans `à Verifier/` (zip et fichiers en vrac
+  identiques) : trois agents dans `agents/`, la commande `/backlog` dans
+  `commands/`, le gabarit vide `modeles/modele-BACKLOG.md`.
+- `hooks/maj-standards` : rafraîchit aussi `.claude/agents/` et
+  `.claude/commands/`, avec la même règle que pour les règles — seuls les
+  fichiers déjà présents dans le projet sont recopiés (fonction `rafraichir`).
+- README : arborescence, bloc d'installation facultatif, § « Backlog et
+  revue » (rôles, modèles, cycle type, mise en garde sur
+  `CLAUDE_CODE_SUBAGENT_MODEL`).
+- `rules/workflow-session.md` : le backlog s'insère au démarrage
+  (`/backlog next`), pendant (planner → implementer → reviewer avant fusion) et
+  en fin de tâche (`from-review`, `done`), toujours conditionné à la présence
+  des fichiers dans le dépôt.
+- `modeles/modele-CLAUDE.md` : note de fin étendue à agents/ et commands/.
+
+**Décisions techniques :**
+- Rangés à la racine du sous-module (`agents/`, `commands/`), pas dans un
+  `.claude/` du sous-module : Claude ne découvre les agents que dans
+  `.claude/agents/` du dépôt, donc la copie est de toute façon nécessaire, et
+  un `.claude/` imbriqué prêterait à confusion avec celui du projet.
+- Contenu adapté au socle plutôt que repris tel quel : format de commit
+  `type : résumé` sans ligne `Co-Authored-By` (le kit disait `type(scope):`),
+  `REVIEW.md` remplacé par le `CLAUDE.md` du projet (le fichier n'existe pas
+  chez nous), hook pre-commit cité à côté de la CI dans ce que le reviewer ne
+  remonte pas, clôture `done` par branche ou commit et non seulement `PR #n`
+  (Git Flow local, pas de PR systématique). `implementer` ne touche ni
+  `BACKLOG.md` ni `SESSION.md` : le résumé de session reste à la session
+  principale, après relecture.
+- Modèles laissés tels que le kit les fixe : reviewer → Fable, planner → Opus,
+  implementer → Sonnet.
+- Tout facultatif : un dépôt sans `BACKLOG.md` ne voit rien changer, le
+  déroulé de session ne mentionne le backlog qu'au conditionnel.
+
+**Fichiers principaux modifiés :**
+- `agents/reviewer.md`, `agents/planner.md`, `agents/implementer.md`,
+  `commands/backlog.md`, `modeles/modele-BACKLOG.md` (nouveaux).
+- `hooks/maj-standards`, `README.md`, `rules/workflow-session.md`,
+  `modeles/modele-CLAUDE.md`.
+
+**Vérifié :**
+- `bash -n hooks/maj-standards`.
+- Banc jetable : dépôt consommateur avec sous-module sur une copie de l'arbre
+  courant, `.claude/rules/python.md`, `.claude/agents/reviewer.md`,
+  `.claude/agents/inconnu.md`, `.claude/commands/backlog.md` périmés. Les trois
+  copies connues sont rafraîchies à l'identique, `inconnu.md` est signalé et
+  laissé en place, le vérificateur annonce le garde-fou actif.
+- Cycle complet en dry run sur un projet Python jetable (bug de remise en
+  pourcentage, `TODO.md` de trois items), chaque agent lancé avec sa
+  définition et son modèle : `migrate` présente puis attend la validation,
+  `next S` recommande la P0 sans écrire, `planner` (Opus) produit un plan à
+  une étape sans ajouter d'outil, `implementer` (Sonnet) committe le seul
+  correctif avec tests au vert, `reviewer` (Fable) rend 0 Important / 2 Nit /
+  1 Pré-existant avec preuves et candidats, `from-review` puis `done` laissent
+  un backlog trié. Trois consignes resserrées à la suite : item vague de
+  `migrate` → « Idées », `from-review` n'importe pas les gestes de session,
+  commit `docs :` du backlog en fin de tâche.
+- Non vérifié : la découverte des agents et de la commande par Claude Code
+  depuis `.claude/agents/` et `.claude/commands/` d'un vrai dépôt consommateur
+  (dans cette session, ils ont été portés par un agent générique).
+
+**Points de vigilance pour la suite :**
+- `à Verifier/` n'est pas versionné et reste à supprimer à la main une fois
+  l'intégration validée (les `:Zone.Identifier` sont déjà ignorés).
+- Le `CLAUDE.md` et le `.claude/settings.json` à la racine de ce dépôt
+  (graphify) ne sont pas versionnés et mentionnent un `graphify-out/` absent.
+- `from-review` cherche la revue dans la conversation courante : après un
+  `/clear`, il faut relancer `reviewer` avant d'importer.
